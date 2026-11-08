@@ -1,0 +1,604 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>מטלות הבית</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600&family=Secular+One&display=swap">
+
+<!-- ספריות Firebase בגרסת Compat לחיבור מהיר ב-HTML -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+:root {
+  --bg: #eef3f1; --surface: #ffffff; --ink: #12302b; --muted: #5d7772; --line: #d3e0dc;
+  --accent: #0e7a6b; --accent-ink: #ffffff; --accent-soft: #d9efe9; --warn: #b4461f;
+  --warn-soft: #fbe6dd; --coin: #b98400; --coin-soft: #f8edcb;
+  --ps: 55%; --pl: 86%; --pt: 22%;
+  --font-display: "Secular One", "Rubik", "Arial Hebrew", Arial, sans-serif;
+  --font-body: "Rubik", "Arial Hebrew", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1c19; --surface: #152724; --ink: #e3f1ed; --muted: #8fb0a9; --line: #264540;
+    --accent: #3fc4ae; --accent-ink: #06221d; --accent-soft: #1b3d37;
+    --warn: #ff9a73; --warn-soft: #3a2218; --coin: #f2c14e; --coin-soft: #3a3016;
+    --ps: 45%; --pl: 26%; --pt: 88%; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1c19; --surface: #152724; --ink: #e3f1ed; --muted: #8fb0a9; --line: #264540;
+  --accent: #3fc4ae; --accent-ink: #06221d; --accent-soft: #1b3d37;
+  --warn: #ff9a73; --warn-soft: #3a2218; --coin: #f2c14e; --coin-soft: #3a3016;
+  --ps: 45%; --pl: 26%; --pt: 88%; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body);
+  font-size: 16px; line-height: 1.45; direction: rtl;
+  padding-block: 16px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+button:focus-visible, .chip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+header { display: flex; flex-direction: column; gap: 12px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; margin: 0; line-height: 1.1; text-wrap: balance; }
+.me { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
+.me select {
+  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 6px 10px; min-height: 40px;
+}
+.banner { background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 8px 12px; font-size: .88rem; }
+
+.weeknav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.weeknav .label { font-weight: 500; text-align: center; flex: 1; }
+.weeknav .label small { display: block; color: var(--muted); font-weight: 400; font-size: .8rem; }
+.icon-btn { width: 44px; height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 1.2rem; }
+.icon-btn:disabled { opacity: .35; cursor: default; }
+
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+.tabs button { flex: 1; min-height: 40px; border-radius: 9px; font-weight: 500; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+
+.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.day {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-width: 0;
+}
+.day .d { font-family: var(--font-display); font-size: 1.25rem; line-height: 1; }
+.day .n { font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.day .bar { width: 70%; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.day .bar i { display: block; height: 100%; background: var(--accent); }
+.day[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.day.today .d::after { content: ""; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--coin); margin: 3px auto 0; }
+
+.dayhead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.dayhead h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; }
+.dayhead .sub { color: var(--muted); font-size: .88rem; font-variant-numeric: tabular-nums; }
+.filter { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
+.filter input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+.list { display: flex; flex-direction: column; gap: 8px; }
+.occ { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.occ.done { background: var(--accent-soft); border-color: transparent; }
+.occ.missed { background: var(--warn-soft); border-color: transparent; }
+.row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; text-align: right; min-height: 60px; }
+.check {
+  flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--line);
+  display: grid; place-items: center; font-size: 1rem; font-weight: 600;
+}
+.done .check { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.missed .check { background: var(--warn); border-color: var(--warn); color: var(--surface); }
+.body { flex: 1; min-width: 0; }
+.name { font-weight: 500; overflow-wrap: anywhere; }
+.meta { font-size: .82rem; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.done .meta { color: var(--ink); }
+.missed .meta { color: var(--warn); }
+.dots { display: flex; flex: none; }
+.dots .p { margin-inline-start: -6px; }
+.p {
+  width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: .78rem; font-weight: 600;
+  background: hsl(var(--h) var(--ps) var(--pl)); color: hsl(var(--h) 60% var(--pt)); border: 2px solid var(--surface); flex: none;
+}
+
+.panel { border-top: 1px dashed var(--line); padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+.panel h3 { margin: 0 0 6px; font-size: .85rem; font-weight: 500; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 4px 12px 4px 8px; border-radius: 20px;
+  border: 1px solid var(--line); background: var(--bg); font-weight: 500;
+}
+.chip .p { width: 24px; height: 24px; border: 0; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chip.out { opacity: .8; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { min-height: 44px; padding: 8px 16px; border-radius: 12px; font-weight: 600; background: var(--accent); color: var(--accent-ink); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.alt { background: var(--warn-soft); color: var(--warn); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+.occ.cancelled { background: transparent; border-style: dashed; }
+.cancelled .check { border-style: dashed; color: var(--muted); }
+.cancelled .name { color: var(--muted); text-decoration: line-through; }
+.reason { width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 44px; }
+.undo { font-size: .82rem; color: var(--muted); text-decoration: underline; padding: 8px 14px 10px; width: 100%; text-align: right; }
+.sep { border: 0; border-top: 1px solid var(--line); margin: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.25rem; }
+.kitty { display: flex; align-items: center; gap: 14px; background: var(--coin-soft); border-color: transparent; }
+.kitty .amt { font-family: var(--font-display); font-size: 2.4rem; line-height: 1; color: var(--coin); font-variant-numeric: tabular-nums; }
+.kitty p { margin: 0; font-size: .88rem; }
+.stat { display: grid; grid-template-columns: 64px 1fr 34px; align-items: center; gap: 10px; }
+.stat .track { height: 14px; border-radius: 7px; background: var(--bg); overflow: hidden; }
+.stat .fill { height: 100%; border-radius: 7px; background: hsl(var(--h) 50% 45%); }
+.stat .v { font-variant-numeric: tabular-nums; text-align: left; font-weight: 500; }
+.debt { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.debt .btn { min-height: 40px; padding: 6px 12px; }
+.empty { color: var(--muted); font-size: .9rem; margin: 0; }
+.rules { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 6px; font-size: .92rem; }
+.rules li { padding-inline-start: 4px; }
+
+.turn { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: var(--ink); }
+.turn .p { width: 22px; height: 22px; border: 0; font-size: .7rem; }
+.monthhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.monthhead h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.cal .hd { text-align: center; font-family: var(--font-display); color: var(--muted); padding-bottom: 2px; }
+.cell {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-height: 84px; padding: 6px 4px 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; text-align: right; min-width: 0;
+}
+.cell.off { background: transparent; border-style: dashed; opacity: .45; }
+.cell .dn { font-weight: 600; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.cell .mine { font-size: .7rem; color: var(--accent); font-weight: 600; }
+.cell .bar { display: block; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.cell .tail { display: flex; flex-direction: column; gap: 3px; }
+.cell .cnt { display: block; line-height: 1.1; }
+.cell .bar i { display: block; height: 100%; background: var(--accent); }
+.cell.today { box-shadow: 0 0 0 2px var(--coin); }
+.cell .cnt { font-size: .7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.toast {
+  position: fixed; inset-inline: 0; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: .9rem; z-index: 20;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .day .bar i { transition: width .25s; }
+  .occ { transition: background-color .2s; }
+}
+</style>
+</head><body>
+
+<div class="wrap" lang="he">
+  <header>
+    <div class="top">
+      <h1>מטלות הבית</h1>
+      <label class="me" for="me">אני:
+        <select id="me"></select>
+      </label>
+    </div>
+    <div id="banner"></div>
+    <div class="weeknav" id="weeknav">
+      <button class="icon-btn" id="nextWeek" aria-label="לשבוע הבא">›</button>
+      <div class="label" id="weekLabel"></div>
+      <button class="icon-btn" id="prevWeek" aria-label="לשבוע הקודם">‹</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabDay" aria-selected="true">יום</button>
+      <button role="tab" id="tabMonth" aria-selected="false">חודש</button>
+      <button role="tab" id="tabSum" aria-selected="false">קופה וסיכום</button>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function () {
+  var PEOPLE = [
+    { n: 'חן', h: 195 }, { n: 'ענבר', h: 330 }, { n: 'אור', h: 38 },
+    { n: 'יעקב', h: 145 }, { n: 'עדן', h: 262 }
+  ];
+  var NAMES = PEOPLE.map(function (p) { return p.n; });
+  var DAYS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+  var ALL = NAMES.slice();
+  var G1 = ['ענבר', 'חן', 'אור'];
+  var G2 = ['עדן', 'יעקב'];
+  var D6 = [0, 1, 2, 3, 4, 5];
+  var TASKS = [
+    { id: 'dishes', name: 'שטיפת כלים', who: ALL, slots: 1, days: D6 },
+    { id: 'unload', name: 'פינוי כלים', who: ALL, slots: 1, days: D6 },
+    { id: 'trash', name: 'פינוי אשפה', who: ALL, slots: 1, days: D6 },
+    { id: 'sibus', name: 'סיבוס', who: ALL, slots: 1, days: D6 },
+    { id: 'shop', name: 'קניות לבית', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [1] },
+    { id: 'wash1', name: 'הכנסת מכונה ענבר/חן/אור', who: G1, slots: 1, days: D6 },
+    { id: 'wash2', name: 'הכנסת מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: D6 },
+    { id: 'hang1', name: 'תליית מכונה ענבר/חן/אור', who: G1, slots: 1, days: D6 },
+    { id: 'hang2', name: 'תליית מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: D6 },
+    { id: 'fold1', name: 'קיפול בגדים ענבר/חן/אור', who: G1, slots: 1, days: D6 },
+    { id: 'fold2', name: 'קיפול בגדים עדן/יעקב/בננות', who: G2, slots: 1, days: D6 },
+    { id: 'floor', name: 'שטיפת מרחב ציבורי (לא שואב שוטף)', who: ALL, slots: 1, days: [4] },
+    { id: 'room1', name: 'שטיפת פרקטים חדר הורים + חדר אור', who: G1, slots: 1, days: [3] },
+    { id: 'room2', name: "שטיפת פרקטים חדר עדן/יעקב + ממ\"ד", who: G2, slots: 1, days: [3] },
+    // בישולים לשבת: ביום ו'. סבתא בתיה: הבאה ביום ו' אחת לשבועיים, החזרה במוצאי שבת (יום ש'). phase קובע באיזה שבוע מתחיל המחזור.
+    { id: 'binBath', name: 'פינוי פח אמבטיה', who: ['עדן', 'יעקב', 'אור'], slots: 1, days: [1, 4] },
+    { id: 'binParents', name: 'פינוי פח מקלחת הורים + פח שירותי אורחים', who: ['ענבר', 'חן'], slots: 1, days: [1, 4] },
+    { id: 'stove', name: 'ניקיון כיריים', who: ALL, slots: 1, days: [5] },
+    { id: 'cleanBath', name: 'ניקוי אמבטיה', who: ['עדן', 'יעקב', 'אור'], slots: 1, days: [2], every: 2, phase: 0 },
+    { id: 'cleanParents', name: 'ניקוי מקלחת הורים + שירותי אורחים', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [2], every: 2, phase: 0 },
+    { id: 'sheets', name: 'החלפת מצעים חדר הורים', who: ['חן', 'ענבר'], slots: 1, days: [3] },
+    { id: 'cook', name: 'בישולים לשבת', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [5] },
+    { id: 'bring', name: 'הבאת סבתא בתיה', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [5], every: 2, phase: 1, noCook: true },
+    { id: 'back', name: 'החזרת סבתא בתיה (מוצאי שבת)', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [6], every: 2, phase: 1 }
+  ];
+  var COOK = TASKS.filter(function (t) { return t.id === 'cook'; })[0];
+  TASKS.forEach(function (t, i) { t.off = i + (t.id === 'hang2' ? 1 : 0); });
+
+  // ---------- state ----------
+  var st = { monthOff: 0, offset: 0, day: 0, tab: 'day', me: '', onlyMine: false, open: null, draft: {}, main: {}, extra: {}, mode: 'loading' };
+  var db = null;
+  var els = {
+    main: document.getElementById('main'), me: document.getElementById('me'), banner: document.getElementById('banner'),
+    weekLabel: document.getElementById('weekLabel'), toast: document.getElementById('toast')
+  };
+
+  try { st.me = localStorage.getItem('chores.me') || ''; st.onlyMine = localStorage.getItem('chores.mine') === '1'; } catch (e) {}
+
+  // ---------- dates ----------
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function key(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  var today = new Date(); today.setHours(12, 0, 0, 0);
+  function weekStart(off) { var d = new Date(today); d.setDate(d.getDate() - d.getDay() + off * 7); return d; }
+  function dayDate(off, idx) { var d = weekStart(off); d.setDate(d.getDate() + idx); return d; }
+  var MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+  function short(d) { return d.getDate() + ' ב' + MONTHS[d.getMonth()]; }
+  var MIN_OFF = -8, MAX_OFF = 8;
+  st.day = today.getDay();
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pIdx(n) { var i = NAMES.indexOf(n); return i < 0 ? 0 : i; }
+  function badge(n) { return '<span class="p" style="--h:' + PEOPLE[pIdx(n)].h + '" aria-hidden="true">' + esc(n.charAt(0)) + '</span>'; }
+  function rec(id) { return st.main[id] || st.extra[id] || null; }
+
+  var EPOCH = Date.UTC(2026, 10, 1);
+  function weekIdx(date) {
+    var dn = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    return Math.round(((dn - date.getDay() * 86400000) - EPOCH) / (7 * 86400000));
+  }
+  function occOn(date) {
+    var idx = date.getDay(), w = weekIdx(date), out = [];
+    if (idx > 6) return out;
+    TASKS.forEach(function (t) {
+      if (t.days.indexOf(idx) < 0) return;
+      if (t.every && ((((w - t.phase) % t.every) + t.every) % t.every) !== 0) return;
+      for (var sl = 1; sl <= t.slots; sl++) out.push({ t: t, slot: sl });
+    });
+    return out;
+  }
+  function findOcc(id) {
+    var d = dayDate(st.offset, st.day), k = key(d);
+    return occOn(d).filter(function (o) { return occId(k, o) === id; })[0];
+  }
+  function occId(dateKey, o) { return dateKey + '_' + o.t.id + '_' + o.slot; }
+  function assignee(t, date, slot) {
+    var w = weekIdx(date), dow = date.getDay();
+    var per = t.days.length * t.slots, n = t.who.length;
+    var pos = t.days.indexOf(dow) * t.slots + (slot - 1), c;
+    c = t.every ? Math.floor((w - t.phase) / t.every) * per + pos : w * per + pos;
+    c += t.off;
+    if (!t.every && n > 2 && per % n === 0) c += w;
+    var i = ((c % n) + n) % n, p = t.who[i];
+    if (t.noCook) {
+      var cook = assignee(COOK, date, 1);
+      if ((cook === 'חן' || cook === 'ענבר') && p === cook) p = t.who[(i + 1) % n];
+    }
+    return p;
+  }
+  function dayStats(k, occ) {
+    var done = 0, off = 0;
+    occ.forEach(function (o) { var r = rec(occId(k, o)); if (r && r.status === 'done') done++; else if (r && r.status === 'cancelled') off++; });
+    return { done: done, total: occ.length - off };
+  }
+  function dateFromKey(k) { var a = k.split('-'); return new Date(+a[0], +a[1] - 1, +a[2], 12); }
+
+  // ---------- storage ----------
+  function save(id, data) {
+    if (db) {
+      return db.collection('done').doc(id).set(data).catch(function (e) { writeFail(e); throw e; });
+    }
+    st.main[id] = data; render(); return Promise.resolve();
+  }
+  function patch(id, data) {
+    if (db) return db.collection('done').doc(id).update(data).catch(function (e) { writeFail(e); throw e; });
+    var r = st.main[id]; if (r) Object.keys(data).forEach(function (k) { r[k] = data[k]; }); render(); return Promise.resolve();
+  }
+  function remove(id) {
+    if (db) return db.collection('done').doc(id).delete().catch(function (e) { writeFail(e); throw e; });
+    delete st.main[id]; render(); return Promise.resolve();
+  }
+  function writeFail(e) {
+    toast(e && e.code === 'permission-denied' ? 'אין לך הרשאת עריכה. בדקו את חוקי האבטחה ב-Firebase.' : 'השמירה נכשלה. נסו שוב.');
+  }
+  var toastT;
+  function toast(msg) {
+    els.toast.textContent = msg; els.toast.hidden = false; clearTimeout(toastT);
+    toastT = setTimeout(function () { els.toast.hidden = true; }, 3500);
+  }
+
+  function mapSnap(snap) {
+    var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); return m;
+  }
+
+  // ---------- actions ----------
+  function markDone(id, o, dateKey) {
+    var d = st.draft, who = assignee(o.t, dateFromKey(dateKey), o.slot);
+    if (!d.by) return;
+    var data = { date: dateKey, task: o.t.id, slot: o.slot, status: 'done', by: d.by, ts: Date.now(), flag: false };
+    if (d.by !== who) { data.instead = who; data.repaid = false; data.flag = true; }
+    st.open = null; st.draft = {};
+    save(id, data).then(function () { toast(data.instead ? 'נרשם. ' + data.instead + ' חייב/ת ל' + data.by + ' החלפה' : 'נרשם. כל הכבוד ' + data.by); }, function () {});
+  }
+  function markMissed(id, o, dateKey) {
+    var data = { date: dateKey, task: o.t.id, slot: o.slot, status: 'missed', payer: assignee(o.t, dateFromKey(dateKey), o.slot), ts: Date.now(), flag: true };
+    st.open = null; st.draft = {};
+    save(id, data).then(function () { toast('5 ₪ נוספו לקופה, ' + data.payer + ' מפקיד/ה בביט'); }, function () {});
+  }
+  function markCancel(id, o, dateKey) {
+    var reason = (st.draft.reason || '').trim();
+    if (reason.length < 3) { toast('כדי לבטל צריך להזין סיבה'); return; }
+    var data = { date: dateKey, task: o.t.id, slot: o.slot, status: 'cancelled', reason: reason.slice(0, 120), by: st.me || '', ts: Date.now(), flag: false };
+    st.open = null; st.draft = {};
+    save(id, data).then(function () { toast('המטלה בוטלה ללא קנס'); }, function () {});
+  }
+  function settle(from, to) {
+    var all = Object.assign({}, st.extra, st.main), ids = [];
+    Object.keys(all).forEach(function (id) { var r = all[id]; if (r.status === 'done' && r.instead === from && r.by === to && !r.repaid) ids.push(id); });
+    ids.reduce(function (p, id) { return p.then(function () { return patch(id, { repaid: true, flag: false }); }); }, Promise.resolve())
+      .then(function () { toast('סומן כהוחזר'); }, function () {});
+  }
+
+  // ---------- render ----------
+  function render() {
+    var opts = '<option value="">בחרו שם</option>' + NAMES.map(function (n) { return '<option' + (n === st.me ? ' selected' : '') + '>' + n + '</option>'; }).join('');
+    if (els.me.innerHTML !== opts) els.me.innerHTML = opts;
+    els.banner.innerHTML = st.mode === 'local'
+      ? '<div class="banner">הנתונים נשמרים בלבד במכשיר הזה כרגע. התחברו ל-Firebase לסנכרון מלא בענן.</div>' : '';
+    var s = weekStart(st.offset), e = dayDate(st.offset, 6);
+    els.weekLabel.innerHTML = (st.offset === 0 ? 'השבוע' : st.offset === -1 ? 'שבוע שעבר' : 'שבוע ' + short(s)) + '<small>' + short(s) + ' – ' + short(e) + '</small>';
+    document.getElementById('weeknav').hidden = st.tab !== 'day';
+    document.getElementById('tabMonth').setAttribute('aria-selected', st.tab === 'month');
+    document.getElementById('nextWeek').disabled = st.offset >= MAX_OFF;
+    document.getElementById('prevWeek').disabled = st.offset <= MIN_OFF;
+    document.getElementById('tabDay').setAttribute('aria-selected', st.tab === 'day');
+    document.getElementById('tabSum').setAttribute('aria-selected', st.tab === 'sum');
+    els.main.innerHTML = st.tab === 'day' ? renderDay() : st.tab === 'month' ? renderMonth() : renderSummary();
+  }
+
+  function renderDay() {
+    var h = '<div class="days">';
+    for (var i = 0; i < 7; i++) {
+      var dd = dayDate(st.offset, i), k = key(dd), occ = occOn(dd), ds = dayStats(k, occ), done = ds.done;
+      var pct = ds.total ? Math.round(done * 100 / ds.total) : 0;
+      var isToday = k === key(today);
+      h += '<button class="day' + (isToday ? ' today' : '') + '" data-day="' + i + '" aria-pressed="' + (i === st.day) + '" aria-label="יום ' + DAYS[i] + ', ' + done + ' מתוך ' + ds.total + '">' +
+        '<span class="d">' + DAYS[i] + '</span><span class="bar"><i style="width:' + pct + '%"></i></span><span class="n">' + done + '/' + ds.total + '</span></button>';
+    }
+    h += '</div>';
+
+    var dd2 = dayDate(st.offset, st.day), k2 = key(dd2), all = occOn(dd2);
+    var list = all.filter(function (o) { return !st.onlyMine || !st.me || assignee(o.t, dd2, o.slot) === st.me; });
+    var dsum = dayStats(k2, all), doneN = dsum.done;
+    h += '<div class="dayhead"><h2>' + (st.day === 6 ? 'שבת' : 'יום ' + DAYS[st.day] + "'") + ', ' + short(dd2) + '</h2><span class="sub">' + doneN + ' מתוך ' + dsum.total + ' בוצעו</span></div>';
+    if (st.me) h += '<label class="filter"><input type="checkbox" id="mine"' + (st.onlyMine ? ' checked' : '') + '> הצג רק את התורים של ' + esc(st.me) + '</label>';
+
+    h += '<div class="list">' + list.map(function (o) { return renderOcc(o, k2); }).join('') + '</div>';
+    if (!list.length) h += '<p class="empty">אין מטלות להצגה ביום הזה.</p>';
+    return h;
+  }
+
+  function renderOcc(o, k) {
+    var id = occId(k, o), r = rec(id), t = o.t, who = assignee(t, dateFromKey(k), o.slot);
+    var cls = r ? (r.status === 'done' ? 'done' : r.status === 'cancelled' ? 'cancelled' : 'missed') : '';
+    var title = esc(t.name) + (t.slots > 1 ? ' <span style="color:var(--muted);font-weight:400">(' + o.slot + ' מתוך ' + t.slots + ')</span>' : '');
+    var meta = '', icon = '';
+    if (r && r.status === 'done') {
+      icon = '✓'; meta = 'בוצע על ידי ' + esc(r.by) + (r.instead ? ' במקום ' + esc(r.instead) + (r.repaid ? ' (הוחזר)' : '') : '');
+    } else if (r && r.status === 'cancelled') {
+      icon = '–'; meta = 'בוטלה ללא קנס. סיבה: ' + esc(r.reason) + (r.by ? ' (' + esc(r.by) + ')' : '');
+    } else if (r) {
+      icon = '₪'; meta = 'לא בוצע. ' + esc(r.payer) + ' מפקיד/ה 5 ₪ בקופה';
+    } else {
+      meta = 'התור של <span class="turn">' + badge(who) + esc(who) + '</span>';
+    }
+    var dots = '';
+    var h = '<div class="occ ' + cls + '"><button class="row" data-open="' + id + '" aria-expanded="' + (st.open === id) + '">' +
+      '<span class="check" aria-hidden="true">' + icon + '</span><span class="body"><div class="name">' + title + '</div><div class="meta">' + meta + '</div></span>' + dots + '</button>';
+    if (r) {
+      h += '<button class="undo" data-undo="' + id + '">ביטול הסימון</button>';
+    } else if (st.open === id) {
+      var d = st.draft;
+      h += '<div class="panel" data-occ="' + id + '"><div><h3>התור של ' + esc(who) + '. מי ביצע בפועל?</h3><div class="chips">' +
+        chipsFor(t, 'by', d.by) + '</div>' +
+        (d.by && d.by !== who ? '<p class="meta">' + esc(who) + ' יחזיר/ה ל' + esc(d.by) + ' החלפה.</p>' : '') + '</div>' +
+        '<div class="actions"><button class="btn" data-do="done" ' + (d.by ? '' : 'disabled') + '>סמן כבוצע</button></div>' +
+        '<hr class="sep"><div><h3>אין צורך במטלה היום? ביטול ללא קנס, בהזנת סיבה מוצדקת</h3>' +
+        '<input class="reason" id="reason" type="text" maxlength="120" placeholder="למשל: אין כלים בכיור, כולם בחופשה" value="' + esc(d.reason || '') + '"></div>' +
+        '<div class="actions"><button class="btn ghost" id="cancelBtn" data-do="cancel" ' + ((d.reason || '').trim().length >= 3 ? '' : 'disabled') + '>בטל מטלה</button></div>' +
+        '<hr class="sep"><div><h3>לא בוצעה ואין מחליף?</h3></div>' +
+        '<div class="actions"><button class="btn alt" data-do="missed">' + esc(who) + ' מפקיד/ה 5 ₪ לקופה</button><button class="btn ghost" data-do="close">סגור</button></div></div>';
+    }
+    return h + '</div>';
+  }
+  function chip(n, field, on) {
+    return '<button class="chip" data-set="' + field + '" data-v="' + esc(n) + '" aria-pressed="' + !!on + '">' + badge(n) + esc(n) + '</button>';
+  }
+  function chipsFor(t, field, cur) {
+    var order = t.who.concat(NAMES.filter(function (n) { return t.who.indexOf(n) < 0; }));
+    return order.map(function (n) {
+      var out = t.who.indexOf(n) < 0;
+      return '<button class="chip' + (out ? ' out' : '') + '" data-set="' + field + '" data-v="' + esc(n) + '" aria-pressed="' + (cur === n) + '">' + badge(n) + esc(n) + (out ? ' (מחליף)' : '') + '</button>';
+    }).join('');
+  }
+
+  function renderMonth() {
+    var base = new Date(today.getFullYear(), today.getMonth() + st.monthOff, 1, 12);
+    var mo = base.getMonth(), yr = base.getFullYear();
+    var first = new Date(yr, mo, 1, 12), last = new Date(yr, mo + 1, 0, 12);
+    var start = new Date(first); start.setDate(start.getDate() - start.getDay());
+    var planned = {}; NAMES.forEach(function (n) { planned[n] = 0; });
+    var h = '<div class="monthhead"><button class="icon-btn" id="nextMonth" aria-label="לחודש הבא"' + (st.monthOff >= 2 ? ' disabled' : '') + '>›</button>' +
+      '<h2>' + MONTHS[mo] + ' ' + yr + '</h2><button class="icon-btn" id="prevMonth" aria-label="לחודש הקודם"' + (st.monthOff <= -1 ? ' disabled' : '') + '>‹</button></div>';
+    h += '<div class="cal">' + DAYS.map(function (d) { return '<div class="hd">' + d + "'</div>"; }).join('');
+    for (var d = new Date(start); d <= last; d.setDate(d.getDate() + 1)) {
+      var dow = d.getDay();
+      var dd = new Date(d), k = key(dd), inMonth = dd.getMonth() === mo, occ = occOn(dd), mine = 0, ms = dayStats(k, occ), done = ms.done;
+      occ.forEach(function (o) {
+        var who = assignee(o.t, dd, o.slot);
+        if (inMonth) planned[who]++;
+        if (st.me && who === st.me) mine++;
+      });
+      if (!inMonth) { h += '<div class="cell off" aria-hidden="true"></div>'; continue; }
+      var pct = ms.total ? Math.round(done * 100 / ms.total) : 0;
+      h += '<button class="cell' + (k === key(today) ? ' today' : '') + '" data-goto="' + k + '" aria-label="' + dd.getDate() + ' ב' + MONTHS[mo] + '">' +
+        '<span class="dn">' + dd.getDate() + '</span>' +
+        (st.me ? '<span class="mine">' + mine + ' שלי</span>' : '') +
+        '<span class="tail"><span class="bar"><i style="width:' + pct + '%"></i></span><span class="cnt">' + done + '/' + ms.total + '</span></span></button>';
+    }
+    h += '</div>';
+    var max = Math.max.apply(null, NAMES.map(function (n) { return planned[n]; }).concat([1]));
+    h += '<div class="card"><h2>תורים מתוכננים ב' + MONTHS[mo] + '</h2><p class="empty">החלוקה מתחלפת אוטומטית בין משתתפי כל מטלה. לחצו על יום כדי לראות מי בתור בכל מטלה.</p>' +
+      NAMES.map(function (n) {
+        return '<div class="stat" style="--h:' + PEOPLE[pIdx(n)].h + '"><span>' + esc(n) + '</span><span class="track"><span class="fill" style="display:block;width:' + Math.round(planned[n] * 100 / max) + '%"></span></span><span class="v">' + planned[n] + '</span></div>';
+      }).join('') + '</div>';
+    return h;
+  }
+
+  function renderSummary() {
+    var s = key(weekStart(st.offset)), e = key(dayDate(st.offset, 6));
+    var counts = {}; NAMES.forEach(function (n) { counts[n] = 0; });
+    var weekDone = 0, weekTotal = 0, missedWeek = 0;
+    for (var i = 0; i < 7; i++) weekTotal += occOn(dayDate(st.offset, i)).length;
+    var cancelledWeek = 0;
+    Object.keys(st.main).forEach(function (id) {
+      var r = st.main[id]; if (!r || r.date < s || r.date > e) return;
+      if (r.status === 'done') { weekDone++; if (counts[r.by] != null) counts[r.by]++; } else if (r.status === 'cancelled') cancelledWeek++; else missedWeek++;
+    });
+    weekTotal -= cancelledWeek;
+    var max = Math.max.apply(null, NAMES.map(function (n) { return counts[n]; }).concat([1]));
+
+    var all = Object.assign({}, st.extra, st.main), kitty = 0, debts = {};
+    Object.keys(all).forEach(function (id) {
+      var r = all[id];
+      if (r.status === 'missed') kitty++;
+      else if (r.status === 'done' && r.instead && !r.repaid) { var k = r.instead + '|' + r.by; debts[k] = (debts[k] || 0) + 1; }
+    });
+
+    var h = '<div class="card kitty"><div class="amt">' + (kitty * 5) + ' ₪</div><p><strong>הקופה המשפחתית</strong><br>' + kitty + ' מטלות שלא בוצעו. כשיצטבר סכום נאה, בוחרים יחד פעילות משפחתית.</p></div>';
+
+    h += '<div class="card"><h2>מי עשה כמה, בשבוע הזה</h2>' +
+      '<p class="empty">' + weekDone + ' מתוך ' + weekTotal + ' ביצועים נרשמו' + (missedWeek ? ', ' + missedWeek + ' לא בוצעו' : '') + (cancelledWeek ? ', ' + cancelledWeek + ' בוטלו' : '') + '.</p>' +
+      NAMES.map(function (n) {
+        return '<div class="stat" style="--h:' + PEOPLE[pIdx(n)].h + '"><span>' + esc(n) + '</span><span class="track"><span class="fill" style="display:block;width:' + Math.round(counts[n] * 100 / max) + '%"></span></span><span class="v">' + counts[n] + '</span></div>';
+      }).join('') + '</div>';
+
+    var dk = Object.keys(debts);
+    h += '<div class="card"><h2>החלפות שצריך להחזיר</h2>';
+    if (!dk.length) h += '<p class="empty">אין חובות פתוחים.</p>';
+    dk.forEach(function (k) {
+      var a = k.split('|');
+      h += '<div class="debt"><span>' + badge(a[0]) + ' <strong>' + esc(a[0]) + '</strong> חייב/ת ל<strong>' + esc(a[1]) + '</strong>: ' + debts[k] + ' החלפות</span>' +
+        '<button class="btn ghost" data-settle="' + esc(k) + '">סמן כהוחזר</button></div>';
+    });
+    h += '</div>';
+
+    h += '<div class="card"><h2>כללי הבית</h2><ol class="rules">' +
+      '<li>מטלות של חלק מבני המשפחה לא עוברות שיקול דעת. הולכים לפי התדירות, ללא פספוסים.</li>' +
+      '<li>מי שלא יכול לבצע את המטלה שלו מוצא מחליף ומחזיר לו אחר כך.</li>' +
+      '<li>אם לא נמצא מחליף והמטלה לא בוצעה, התורן מפקיד 5 ₪ בקופה בביט.</li>' +
+      '<li>כשיצטבר סכום נאה, מחליטים יחד על פעילות משפחתית חוויתית.</li></ol></div>';
+    return h;
+  }
+
+  // ---------- events ----------
+  document.addEventListener('click', function (ev) {
+    var t = ev.target.closest('button');
+    if (!t) return;
+    if (t.id === 'prevWeek') { st.offset = Math.max(MIN_OFF, st.offset - 1); st.open = null; render(); return; }
+    if (t.id === 'nextWeek') { st.offset = Math.min(MAX_OFF, st.offset + 1); st.open = null; render(); return; }
+    if (t.id === 'tabDay') { st.tab = 'day'; render(); return; }
+    if (t.id === 'prevMonth') { st.monthOff = Math.max(-1, st.monthOff - 1); render(); return; }
+    if (t.id === 'nextMonth') { st.monthOff = Math.min(2, st.monthOff + 1); render(); return; }
+    if (t.dataset.goto) {
+      var gd = dateFromKey(t.dataset.goto), ws = new Date(gd); ws.setDate(ws.getDate() - ws.getDay());
+      var diff = Math.round((ws.getTime() - weekStart(0).getTime()) / (7 * 86400000));
+      st.offset = diff; st.day = gd.getDay(); st.tab = 'day'; st.open = null; render(); return;
+    }
+    if (t.dataset.undo) { remove(t.dataset.undo); return; }
+    if (t.dataset.settle) { settle.apply(null, t.dataset.settle.split('|')); return; }
+    if (t.dataset.open) { st.open = st.open === t.dataset.open ? null : t.dataset.open; st.draft = {}; render(); return; }
+    if (t.dataset.set) { st.draft[t.dataset.set] = t.dataset.v; var p = t.closest('.panel'); if (p) { p.outerHTML = renderOcc(findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); } return; }
+    if (t.dataset.do === 'close') { st.open = null; st.draft = {}; render(); return; }
+    if (t.dataset.do === 'done') { var p = t.closest('.panel'); if (p) markDone(p.dataset.occ, findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); return; }
+    if (t.dataset.do === 'missed') { var p = t.closest('.panel'); if (p) markMissed(p.dataset.occ, findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); return; }
+    if (t.dataset.do === 'cancel') { var p = t.closest('.panel'); if (p) markCancel(p.dataset.occ, findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); return; }
+  });
+
+  document.addEventListener('input', function (ev) {
+    var el = ev.target;
+    if (el.id === 'reason') st.draft.reason = el.value;
+    if (el.id === 'mine') { st.onlyMine = el.checked; try { localStorage.setItem('chores.mine', st.onlyMine ? '1' : '0'); } catch (e) {} render(); }
+  });
+
+  document.addEventListener('change', function (ev) {
+    var el = ev.target;
+    if (el.id === 'me') { st.me = el.value; try { localStorage.setItem('chores.me', st.me); } catch (e) {} render(); }
+    if (el.id === 'mine') { st.onlyMine = el.checked; try { localStorage.setItem('chores.mine', st.onlyMine ? '1' : '0'); } catch (e) {} render(); }
+  });
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('.day');
+    if (b && b.dataset.day != null) { st.day = +b.dataset.day; render(); }
+  });
+
+  document.getElementById('tabMonth').addEventListener('click', function () { st.tab = 'month'; st.open = null; render(); });
+  document.getElementById('tabSum').addEventListener('click', function () { st.tab = 'sum'; st.open = null; render(); });
+
+  // ---------- init firebase ----------
+  try {
+    var firebaseConfig = {
+      apiKey: "AIzaSyCo8dcTMutK0v1dcuEPSkvAZA8NYPySy_U",
+      authDomain: "home-tasks-keynan.firebaseapp.com",
+      projectId: "home-tasks-keynan",
+      storageBucket: "home-tasks-keynan.firebasestorage.app",
+      messagingSenderId: "729196217374",
+      appId: "1:729196217374:web:bfa8c34e9b027367db1a0f"
+    };
+
+    if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      st.mode = 'live';
+      db.collection('done').onSnapshot(function (snap) {
+        st.main = mapSnap(snap);
+        st.mode = 'live';
+        render();
+      }, function (err) {
+        console.error(err);
+        st.mode = 'local';
+        render();
+      });
+    } else {
+      st.mode = 'local';
+    }
+  } catch (err) {
+    console.error(err);
+    st.mode = 'local';
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
