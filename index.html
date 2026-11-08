@@ -538,7 +538,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (t.dataset.undo) { remove(t.dataset.undo); return; }
     if (t.dataset.settle) { settle.apply(null, t.dataset.settle.split('|')); return; }
     if (t.dataset.open) { st.open = st.open === t.dataset.open ? null : t.dataset.open; st.draft = {}; render(); return; }
-    if (t.dataset.set) { st.draft[t.dataset.set] = t.dataset.v; var p = t.closest('.panel'); if (p) { p.outerHTML = renderOcc(findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); } return; }
+    if (t.dataset.set) { st.draft[t.dataset.set] = t.dataset.v; var p = t.closest('.panel'); if (p) { var oc = p.closest('.occ'); oc.outerHTML = renderOcc(findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); } return; }
     if (t.dataset.do === 'close') { st.open = null; st.draft = {}; render(); return; }
     if (t.dataset.do === 'done') { var p = t.closest('.panel'); if (p) markDone(p.dataset.occ, findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); return; }
     if (t.dataset.do === 'missed') { var p = t.closest('.panel'); if (p) markMissed(p.dataset.occ, findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); return; }
@@ -547,7 +547,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 
   document.addEventListener('input', function (ev) {
     var el = ev.target;
-    if (el.id === 'reason') st.draft.reason = el.value;
+    if (el.id === 'reason') {
+      st.draft.reason = el.value;
+      var cb = document.getElementById('cancelBtn');
+      if (cb) cb.disabled = el.value.trim().length < 3;
+    }
     if (el.id === 'mine') { st.onlyMine = el.checked; try { localStorage.setItem('chores.mine', st.onlyMine ? '1' : '0'); } catch (e) {} render(); }
   });
 
