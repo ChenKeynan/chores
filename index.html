@@ -255,8 +255,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'cleanBath', name: 'ניקוי אמבטיה', who: ['עדן', 'יעקב', 'אור'], slots: 1, days: [2], every: 2, phase: 0 },
     { id: 'cleanParents', name: 'ניקוי מקלחת הורים + שירותי אורחים', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [2], every: 2, phase: 0 },
     { id: 'sheets', name: 'החלפת מצעים חדר הורים', who: ['חן', 'ענבר'], slots: 1, days: [3] },
-    { id: 'cook', name: 'בישולים לשבת', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [5] },
-    { id: 'bring', name: 'הבאת סבתא בתיה', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [5], every: 2, phase: 1, noCook: true },
+    { id: 'cook', name: 'בישולים לשבת', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [5], anchor: { date: '2026-11-13', who: 'חן' } },
+    { id: 'bring', name: 'הבאת סבתא בתיה', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [5], every: 2, phase: 1, noCook: true, anchor: { date: '2026-11-13', who: 'ענבר' } },
     { id: 'back', name: 'החזרת סבתא בתיה (מוצאי שבת)', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [6], every: 2, phase: 1 }
   ];
   var COOK = TASKS.filter(function (t) { return t.id === 'cook'; })[0];
@@ -308,14 +308,18 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     return occOn(d).filter(function (o) { return occId(k, o) === id; })[0];
   }
   function occId(dateKey, o) { return dateKey + '_' + o.t.id + '_' + o.slot; }
-  function assignee(t, date, slot) {
+  function rawC(t, date, slot) {
     var w = weekIdx(date), dow = date.getDay();
     var per = t.days.length * t.slots, n = t.who.length;
     var pos = t.days.indexOf(dow) * t.slots + (slot - 1), c;
     c = t.every ? Math.floor((w - t.phase) / t.every) * per + pos : w * per + pos;
     c += t.off;
     if (!t.every && n > 2 && per % n === 0) c += w;
-    var i = ((c % n) + n) % n, p = t.who[i];
+    return c;
+  }
+  function assignee(t, date, slot) {
+    var n = t.who.length;
+    var i = (((rawC(t, date, slot) + (t.shift || 0)) % n) + n) % n, p = t.who[i];
     if (t.noCook) {
       var cook = assignee(COOK, date, 1);
       if ((cook === 'חן' || cook === 'ענבר') && p === cook) p = t.who[(i + 1) % n];
@@ -328,6 +332,12 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     return { done: done, total: occ.length - off };
   }
   function dateFromKey(k) { var a = k.split('-'); return new Date(+a[0], +a[1] - 1, +a[2], 12); }
+  // עוגן: מי מתחיל את הסבב בתאריך מסוים, והסבב ממשיך משם לפי סדר הרשימה
+  TASKS.forEach(function (t) {
+    if (!t.anchor) return;
+    var n = t.who.length, raw = rawC(t, dateFromKey(t.anchor.date), 1);
+    t.shift = (((t.who.indexOf(t.anchor.who) - raw) % n) + n) % n;
+  });
 
   // ---------- storage ----------
   function save(id, data) {
