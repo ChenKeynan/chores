@@ -97,7 +97,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .meta { font-size: .82rem; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
 .done .meta { color: var(--ink); }
 .missed .meta { color: var(--warn); }
-.dots { display: flex; flex: none; }
+.dots { display: flex; flex: none; width: 72px; justify-content: flex-end; align-items: center; }
 .dots .p { margin-inline-start: -6px; }
 .p {
   width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: .78rem; font-weight: 600;
@@ -177,7 +177,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .lvl { width: 28px; height: 28px; vertical-align: -8px; margin-inline-start: 6px; flex: none; }
 .lvl-light { color: var(--accent); }
 .lvl-mid { color: var(--coin); }
-.lvl-hard { color: var(--warn); width: 46px; height: 38px; vertical-align: -12px; }
+.lvl-hard { color: var(--warn); }
 .legend { margin: 0; font-size: .85rem; color: var(--muted); display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; }
 .legend span { display: inline-flex; align-items: center; gap: 4px; }
 .legend .lvl { margin: 0; }
@@ -186,8 +186,38 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .row .body { margin-inline-end: 4px; }
 .day .dt { font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1; }
 .weeknav .label small { font-size: calc(.8rem + 2pt); font-weight: 700; }
-.rule-burgundy { color: var(--burgundy); }
+/* סטטוס שמירה בכותרת */
+:root { --sync-g: #1f9d55; }
+.titlegrp { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sync { display: inline-flex; align-items: center; gap: 5px; font-size: .85rem; font-weight: 600; color: var(--dur-g); }
+.sync[hidden] { display: none; }
+.sync-ic { width: 22px; height: 22px; flex: none; }
+.sync.saved .sync-ic { color: var(--sync-g); }
+.sync.saving .sync-ic { animation: sync-spin 1s linear infinite; }
+@keyframes sync-spin { to { transform: rotate(-360deg); } }
+@media (prefers-reduced-motion: reduce) { .sync.saving .sync-ic { animation: none; } }
+.rule-red { color: var(--dur-r); font-weight: 700; }
+.panel h3 strong { font-weight: 700; color: var(--ink); }
+
+/* תזכורת יום שישי */
+.modal-back { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); background: rgba(0, 0, 0, .5); }
+.modal { width: min(100%, 340px); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 18px; padding: 26px 22px 20px; text-align: center; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); }
+.modal p { margin: 0 0 20px; font-family: var(--font-display); font-size: 1.35rem; line-height: 1.35; text-wrap: balance; }
+.modal .btn { min-width: 120px; }
 .row .lvl { margin: 0; }
+
+/* משך מטלה */
+:root { --dur-g: #1f9d55; --dur-o: #e08a00; --dur-r: #d23b2a; --dur-g-soft: #dcf3e4; --dur-o-soft: #fdebc8; --dur-r-soft: #fbdad5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --dur-g: #4cd387; --dur-o: #f5ad3a; --dur-r: #ff7a69; --dur-g-soft: #17382a; --dur-o-soft: #3a2d12; --dur-r-soft: #3d1d19; } }
+:root[data-theme="dark"] { --dur-g: #4cd387; --dur-o: #f5ad3a; --dur-r: #ff7a69; --dur-g-soft: #17382a; --dur-o-soft: #3a2d12; --dur-r-soft: #3d1d19; }
+.dur { display: inline-flex; flex: none; flex-direction: column; align-items: center; gap: 7px; margin-inline: 4px 8px; }
+.dur-tag { flex: none; font-size: .74rem; font-weight: 600; line-height: 1; padding: 4px 8px; border-radius: 10px; font-variant-numeric: tabular-nums; }
+.dur-g .dur-tag { background: var(--dur-g-soft); color: var(--dur-g); }
+.dur-o .dur-tag { background: var(--dur-o-soft); color: var(--dur-o); }
+.dur-r .dur-tag { background: var(--dur-r-soft); color: var(--dur-r); }
+.dur-bar { position: relative; flex: none; width: 80px; height: 6px; border-radius: 3px; direction: rtl;
+  background: linear-gradient(to left, var(--dur-g) 0%, var(--dur-g) 18%, var(--dur-o) 40%, var(--dur-o) 60%, var(--dur-r) 82%, var(--dur-r) 100%); }
+.dur-bar i { position: absolute; top: -3px; inset-inline-start: var(--pos); width: 4px; height: 12px; margin-inline-start: -2px; border-radius: 2px; background: var(--ink); box-shadow: 0 0 0 1.5px var(--surface); }
 
 /* רקע כלי אוכל מרחפים */
 .bgware { position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; color: var(--accent); }
@@ -209,11 +239,12 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 </style>
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-sync" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 0-13.7-5.6L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 12a8 8 0 0 0 13.7 5.6L20 15.5"/><path d="M20 20v-4.5h-4.5"/></g></symbol>
+<symbol id="i-cloud-ok" viewBox="0 0 24 24"><path d="M6.5 19A4.5 4.5 0 0 1 6 10.03 6 6 0 0 1 17.6 9.3 4.85 4.85 0 0 1 17.5 19Z" fill="currentColor"/><path d="M8.8 13.6l2.4 2.4 4.2-4.7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="w-feather" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-<path d="M27.5 4.5C16 3.5 8.5 10.5 8 21c-.1 1.6.2 3 .7 4.2l8.3-8.3 5-5.2" fill="currentColor" fill-opacity=".2"/>
-<path d="M27.5 4.5c1.2 11.5-4.5 19.5-14.5 20.5-1.6.2-3.2-.1-4.3-.7" fill="currentColor" fill-opacity=".2"/>
-<path d="M4 29 21 12"/>
-<path d="M13.5 20.5l-.5-5.5M17.5 16.5l-.5-5.5M10 23.5l-5.2-.8M16.5 22.5l5.5.3M20 18.5l5.2.5M14 12.8l4.6-2.2"/>
+<path d="M4.5 28L6.6 24.4 7.7 22.6 8.1 20.7 8.5 18.6 9.2 16.5 10.3 14.3 12.1 12.2 14.7 10.6 17.3 9.6 18.5 8.7 18.7 7.7 19.0 6.9 19.6 6.0 20.7 5.1 22.1 4.2 23.8 3.4 25.5 2.7 27.5 4.5 28.8 6.1 28.0 7.4 27.4 8.4 26.9 9.5 26.5 10.8 26.0 12.4 25.2 14.4 23.9 16.6 22.2 17.9 20.7 18.0 19.2 18.1 17.8 19.0 16.3 20.5 14.9 22.5 13.3 24.6 11.5 26.7 9.3 28.1Z" fill="currentColor" fill-opacity=".14" stroke="none"/>
+<path d="M6.3 27.4Q6.9 25.4 6.6 24.4M6.3 27.4Q8.3 27.5 9.3 28.1M7.7 26.4Q8.1 24.0 7.7 22.6M7.7 26.4Q10.2 26.2 11.5 26.7M8.9 25.0Q8.8 22.2 8.1 20.7M8.9 25.0Q11.6 24.4 13.3 24.6M10.0 23.4Q9.4 20.3 8.5 18.6M10.0 23.4Q12.9 22.5 14.9 22.5M10.9 21.7Q10.2 18.4 9.2 16.5M10.9 21.7Q14.1 20.6 16.3 20.5M11.9 20.0Q11.3 16.4 10.3 14.3M11.9 20.0Q15.4 19.0 17.8 19.0M13.0 18.4Q12.8 14.6 12.1 12.2M13.0 18.4Q16.8 17.9 19.2 18.1M14.4 17.0Q14.9 13.2 14.7 10.6M14.4 17.0Q18.2 17.3 20.7 18.0M16.0 16.0Q17.1 12.2 17.3 9.6M16.0 16.0Q19.8 16.8 22.2 17.9M17.6 15.1Q18.5 11.3 18.5 8.7M17.6 15.1Q21.5 15.6 23.9 16.6M18.9 14.0Q19.2 10.2 18.7 7.7M18.9 14.0Q22.7 13.9 25.2 14.4M20.0 12.8Q19.8 9.2 19.0 6.9M20.0 12.8Q23.6 12.2 26.0 12.4M20.9 11.5Q20.5 8.1 19.6 6.0M20.9 11.5Q24.3 10.7 26.5 10.8M21.8 10.1Q21.5 7.0 20.7 5.1M21.8 10.1Q24.9 9.4 26.9 9.5M22.9 8.7Q22.7 5.9 22.1 4.2M22.9 8.7Q25.6 8.1 27.4 8.4M24.1 7.3Q24.3 4.8 23.8 3.4M24.1 7.3Q26.5 7.0 28.0 7.4M25.6 5.9Q25.9 3.8 25.5 2.7M25.6 5.9Q27.7 5.7 28.8 6.1" stroke-width=".6"/>
+<path d="M4.5 28C10.5 27 10.5 18.5 16 16S21 8.5 27.5 4.5" stroke-width="1.5"/>
 </g></symbol>
 <symbol id="w-brain" viewBox="0 0 46 40"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 <path d="M13.5 27.6c.3 4 3 7 10.7 9.8l.5-3c-3.6-1.6-5.4-3.8-5.6-6.8z" fill="currentColor" fill-opacity=".28"/>
@@ -237,7 +268,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 <path d="M2.5 16.5c-1 0-1.5.8-1.5 1.8M29.5 16.5c1 0 1.5.8 1.5 1.8"/>
 </g></symbol>
 <symbol id="w-dumbbell" viewBox="0 0 40 34"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-<path d="M13.5 13.5v-2.2a6.5 6.5 0 0 1 13 0v2.2" stroke-width="2.6"/>
+<path d="M15.5 13.5v-2.2a4.5 4.5 0 0 1 9 0v2.2" stroke-width="2.2"/>
 <path d="M12.5 13h15l6.3 16a2 2 0 0 1-1.9 2.7H8.1A2 2 0 0 1 6.2 29z" fill="currentColor" fill-opacity=".22"/>
 </g>
 <text x="20" y="25.6" font-size="6.2" font-weight="800" direction="ltr" style="unicode-bidi:bidi-override" text-anchor="middle" fill="currentColor" stroke="none" font-family="Arial, sans-serif" letter-spacing=".2">20 Kg</text></symbol>
@@ -252,7 +283,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 <div class="wrap" lang="he">
   <header>
     <div class="top">
-      <h1>מטלות הבית</h1>
+      <div class="titlegrp"><h1>מטלות הבית</h1><span class="sync" id="sync" role="status" aria-live="polite" hidden><svg class="sync-ic" aria-hidden="true"><use href="#i-sync"/></svg><span>נשמר</span></span></div>
       <div class="topctl">
         <button class="today-btn" id="goToday" aria-pressed="false">היום</button>
         <label class="me" for="me">אני:
@@ -312,7 +343,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'sheets', name: 'החלפת מצעים חדר הורים', who: ['חן', 'ענבר'], slots: 1, days: [3] },
     { id: 'cook', name: 'בישולים לשבת', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [5], anchor: { date: '2026-11-13', who: 'חן' } },
     { id: 'bring', name: 'הבאת סבתא בתיה', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [5], every: 2, phase: 1, noCook: true, anchor: { date: '2026-11-13', who: 'ענבר' } },
-    { id: 'back', name: 'החזרת סבתא בתיה (מוצאי שבת)', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [6], every: 2, phase: 1 },
+    { id: 'back', name: 'החזרת סבתא בתיה (מוצאי שבת)', who: ['חן', 'אור'], slots: 1, days: [6], every: 2, phase: 1 },
     { id: 'table', name: 'עריכת שולחן לכבוד שבת', who: ['חן', 'ענבר', 'יעקב', 'עדן', 'אור'], slots: 1, days: [5] },
     { id: 'urn', name: 'מילוי וחיבור מיחם', who: ['חן', 'ענבר', 'יעקב', 'עדן', 'אור'], slots: 1, days: [5] },
     { id: 'shabbatAm', name: 'עריכת שולחן והכנת ארוחת שבת בבוקר', who: ['ענבר', 'עדן'], slots: 1, days: [6] }
@@ -332,6 +363,22 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     return '<svg class="lvl lvl-' + l + '" role="img" aria-label="' + LEVEL_LABEL[l] + '"><title>' + LEVEL_LABEL[l] + '</title><use href="#' + sym + '"/></svg>';
   }
   TASKS.forEach(function (t, i) { t.off = i + (t.id === 'hang2' ? 1 : 0); });
+
+  // משך כל מטלה בדקות (1–180)
+  var DURATIONS = {
+    dishes: 20, unload: 5, trash: 5, sibus: 10, shop: 90,
+    wash1: 5, wash2: 5, hang1: 10, hang2: 10, fold1: 15, fold2: 15,
+    floor: 30, room1: 30, room2: 30, binBath: 5, binParents: 5, stove: 15,
+    cleanBath: 40, cleanParents: 45, sheets: 15, cook: 180, bring: 120, back: 120,
+    table: 15, urn: 5, shabbatAm: 30
+  };
+  TASKS.forEach(function (t) { t.mins = Math.min(180, Math.max(1, DURATIONS[t.id] || 10)); });
+  function durHtml(t) {
+    var m = t.mins, c = m <= 15 ? 'g' : m <= 30 ? 'o' : 'r';
+    var pos = ((m - 1) / 179 * 100).toFixed(1) + '%';
+    return '<div class="dur dur-' + c + '" role="img" aria-label="משך המטלה ' + m + ' דקות"><span class="dur-tag">' + m + ' דק׳</span>' +
+      '<span class="dur-bar" style="--pos:' + pos + '"><i></i></span></div>';
+  }
 
   // ---------- state ----------
   var st = { hlToday: false, monthOff: 0, offset: 0, day: 0, tab: 'day', me: '', onlyMine: false, open: null, draft: {}, main: {}, extra: {}, mode: 'loading' };
@@ -413,17 +460,33 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   // ---------- storage ----------
   function save(id, data) {
     if (db) {
-      return db.collection('done').doc(id).set(data).catch(function (e) { writeFail(e); throw e; });
+      return track(db.collection('done').doc(id).set(data).catch(function (e) { writeFail(e); throw e; }));
     }
-    st.main[id] = data; render(); return Promise.resolve();
+    st.main[id] = data; render(); return track(Promise.resolve());
   }
   function patch(id, data) {
-    if (db) return db.collection('done').doc(id).update(data).catch(function (e) { writeFail(e); throw e; });
-    var r = st.main[id]; if (r) Object.keys(data).forEach(function (k) { r[k] = data[k]; }); render(); return Promise.resolve();
+    if (db) return track(db.collection('done').doc(id).update(data).catch(function (e) { writeFail(e); throw e; }));
+    var r = st.main[id]; if (r) Object.keys(data).forEach(function (k) { r[k] = data[k]; }); render(); return track(Promise.resolve());
   }
   function remove(id) {
-    if (db) return db.collection('done').doc(id).delete().catch(function (e) { writeFail(e); throw e; });
-    delete st.main[id]; render(); return Promise.resolve();
+    if (db) return track(db.collection('done').doc(id).delete().catch(function (e) { writeFail(e); throw e; }));
+    delete st.main[id]; render(); return track(Promise.resolve());
+  }
+  // סטטוס שמירה: חצים עגולים בזמן השמירה, ענן ירוק עם V אחרי שנשמר בפועל
+  var pend = 0;
+  function syncSet(s) {
+    var el = document.getElementById('sync'); if (!el) return;
+    if (s === 'idle') { el.hidden = true; return; }
+    el.hidden = false; el.className = 'sync ' + s;
+    el.querySelector('use').setAttribute('href', s === 'saving' ? '#i-sync' : '#i-cloud-ok');
+  }
+  function track(p) {
+    pend++; syncSet('saving'); var t0 = Date.now();
+    function fin(ok) {
+      pend--; if (pend > 0) return;
+      setTimeout(function () { if (pend === 0) syncSet(ok ? 'saved' : 'idle'); }, Math.max(0, 700 - (Date.now() - t0)));
+    }
+    return p.then(function (v) { fin(true); return v; }, function (e) { fin(false); throw e; });
   }
   function writeFail(e) {
     toast(e && e.code === 'permission-denied' ? 'אין לך הרשאת עריכה. בדקו את חוקי האבטחה ב-Firebase.' : 'השמירה נכשלה. נסו שוב.');
@@ -523,16 +586,16 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     }
     var dots = (t.brain ? '<svg class="brain" role="img" aria-label="דורש חשיבה ותכנון מראש"><title>דורש חשיבה ותכנון מראש</title><use href="#w-brain"/></svg>' : '') + lvlIcon(t.level);
     var h = '<div class="occ ' + cls + '"><button class="row" data-open="' + id + '" aria-expanded="' + (st.open === id) + '">' +
-      '<span class="check" aria-hidden="true">' + icon + '</span><span class="body"><div class="name">' + title + '</div><div class="meta">' + meta + '</div></span>' + dots + '</button>';
+      '<span class="check" aria-hidden="true">' + icon + '</span><span class="body"><div class="name">' + title + '</div><div class="meta">' + meta + '</div></span>' + durHtml(t) + dots + '</button>';
     if (r) {
       h += '<button class="undo" data-undo="' + id + '">ביטול הסימון</button>';
     } else if (st.open === id) {
       var d = st.draft;
-      h += '<div class="panel" data-occ="' + id + '"><div><h3>התור של ' + esc(who) + '. מי ביצע בפועל?</h3><div class="chips">' +
+      h += '<div class="panel" data-occ="' + id + '"><div><h3>התור של ' + esc(who) + '. <strong>מי ביצע בפועל?</strong></h3><div class="chips">' +
         chipsFor(t, 'by', d.by) + '</div>' +
         (d.by && d.by !== who ? '<p class="meta">' + esc(who) + ' יחזיר/ה ל' + esc(d.by) + ' החלפה.</p>' : '') + '</div>' +
         '<div class="actions"><button class="btn" data-do="done" ' + (d.by ? '' : 'disabled') + '>סמן כבוצע</button></div>' +
-        '<hr class="sep"><div><h3>אין צורך במטלה היום? ביטול ללא קנס, בהזנת סיבה מוצדקת</h3>' +
+        '<hr class="sep"><div><h3><strong>אין צורך במטלה היום?</strong> ביטול ללא קנס, בהזנת סיבה מוצדקת</h3>' +
         '<input class="reason" id="reason" type="text" maxlength="120" placeholder="למשל: אין כלים בכיור, כולם בחופשה" value="' + esc(d.reason || '') + '"></div>' +
         '<div class="actions"><button class="btn ghost" id="cancelBtn" data-do="cancel" ' + ((d.reason || '').trim().length >= 3 ? '' : 'disabled') + '>בטל מטלה</button></div>' +
         '<hr class="sep"><div><h3>לא בוצעה ואין מחליף?</h3></div>' +
@@ -627,7 +690,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       '<li>מי שלא יכול לבצע את המטלה שלו מוצא מחליף ומחזיר לו אחר כך.</li>' +
       '<li>אם לא נמצא מחליף והמטלה לא בוצעה, התורן מפקיד 5 ₪ בקופה בביט.</li>' +
       '<li>כשיצטבר סכום נאה, מחליטים יחד על פעילות משפחתית חוויתית.</li>' +
-      '<li class="rule-burgundy">מי שתורן בישולים לשבת אחראי לומר לתורן קניות עד יום שני בצהריים איזה מצרכים יש לקנות לבישולים לשבת (לסעודה ראשונה ושלישית בעיקר).</li></ol></div>';
+      '<li class="rule-red">מי שתורן בישולים לשבת אחראי לומר לתורן קניות עד יום שני בצהריים איזה מצרכים יש לקנות לבישולים לשבת (לסעודה ראשונה ושלישית בעיקר).</li></ol></div>';
     return h;
   }
 
@@ -712,7 +775,36 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     st.mode = 'local';
   }
 
+  // ---------- תזכורת יום שישי ----------
+  // ביום שישי, משעה 8:00, בפתיחה הראשונה בלבד באותו יום
+  var FRIDAY_DEMO = false;
+  function fridayReminder() {
+    if (!FRIDAY_DEMO) {
+      var now = new Date();
+      if (now.getDay() !== 5 || now.getHours() < 8) return;
+      var k = key(now), seen = null;
+      try { seen = localStorage.getItem('chores.fri'); } catch (e) {}
+      if (seen === k) return;
+      try { localStorage.setItem('chores.fri', k); } catch (e) {}
+    }
+    var prev = document.activeElement;
+    var back = document.createElement('div');
+    back.className = 'modal-back';
+    back.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="fri-t"><p id="fri-t">בדוק כעת גם את המשימות של מחר</p><button class="btn" type="button">הבנתי</button></div>';
+    function close() {
+      document.removeEventListener('keydown', onKey);
+      back.remove();
+      if (prev && prev.focus) prev.focus();
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    back.addEventListener('click', function (e) { if (e.target === back || e.target.tagName === 'BUTTON') close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(back);
+    back.querySelector('button').focus();
+  }
+
   render();
+  fridayReminder();
 })();
 </script>
 </body>
