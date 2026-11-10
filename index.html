@@ -13,7 +13,7 @@
   --bg: #eef3f1; --surface: #ffffff; --ink: #12302b; --muted: #5d7772; --line: #d3e0dc;
   --accent: #0e7a6b; --accent-ink: #ffffff; --accent-soft: #d9efe9; --warn: #b4461f;
   --warn-soft: #fbe6dd; --coin: #b98400; --coin-soft: #f8edcb;
-  --ps: 55%; --pl: 86%; --pt: 22%;
+  --ps: 55%; --pl: 86%; --pt: 22%; --today: #4a148c; --burgundy: #800020;
   --font-display: "Secular One", "Rubik", "Arial Hebrew", Arial, sans-serif;
   --font-body: "Rubik", "Arial Hebrew", Arial, sans-serif;
 }
@@ -22,14 +22,14 @@
     --bg: #0d1c19; --surface: #152724; --ink: #e3f1ed; --muted: #8fb0a9; --line: #264540;
     --accent: #3fc4ae; --accent-ink: #06221d; --accent-soft: #1b3d37;
     --warn: #ff9a73; --warn-soft: #3a2218; --coin: #f2c14e; --coin-soft: #3a3016;
-    --ps: 45%; --pl: 26%; --pt: 88%; color-scheme: dark;
+    --ps: 45%; --pl: 26%; --pt: 88%; --today: #b794f6; --burgundy: #e5849a; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0d1c19; --surface: #152724; --ink: #e3f1ed; --muted: #8fb0a9; --line: #264540;
   --accent: #3fc4ae; --accent-ink: #06221d; --accent-soft: #1b3d37;
   --warn: #ff9a73; --warn-soft: #3a2218; --coin: #f2c14e; --coin-soft: #3a3016;
-  --ps: 45%; --pl: 26%; --pt: 88%; color-scheme: dark;
+  --ps: 45%; --pl: 26%; --pt: 88%; --today: #b794f6; --burgundy: #e5849a; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body {
@@ -169,6 +169,26 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   .occ { transition: background-color .2s; }
 }
 
+/* כפתור היום, נוצה */
+.topctl { display: flex; align-items: center; gap: 10px; }
+.today-btn { min-height: 40px; padding: 6px 16px; border-radius: 10px; border: 2px solid var(--today); color: var(--today); font-weight: 600; background: var(--surface); }
+.today-btn[aria-pressed="true"] { background: var(--today); color: var(--surface); }
+.day.hl, .cell.hl { border-color: var(--today); box-shadow: 0 0 0 4px var(--today); }
+.lvl { width: 28px; height: 28px; vertical-align: -8px; margin-inline-start: 6px; flex: none; }
+.lvl-light { color: var(--accent); }
+.lvl-mid { color: var(--coin); }
+.lvl-hard { color: var(--warn); width: 46px; height: 38px; vertical-align: -12px; }
+.legend { margin: 0; font-size: .85rem; color: var(--muted); display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend .lvl { margin: 0; }
+.brain { width: 44px; height: 38px; color: var(--burgundy); flex: none; }
+.row { gap: 8px; }
+.row .body { margin-inline-end: 4px; }
+.day .dt { font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1; }
+.weeknav .label small { font-size: calc(.8rem + 2pt); font-weight: 700; }
+.rule-burgundy { color: var(--burgundy); }
+.row .lvl { margin: 0; }
+
 /* רקע כלי אוכל מרחפים */
 .bgware { position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; color: var(--accent); }
 .bgware .w { position: absolute; width: var(--sz); height: var(--sz); opacity: .24; transform: rotate(var(--rot)); }
@@ -189,6 +209,38 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 </style>
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="w-feather" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M27.5 4.5C16 3.5 8.5 10.5 8 21c-.1 1.6.2 3 .7 4.2l8.3-8.3 5-5.2" fill="currentColor" fill-opacity=".2"/>
+<path d="M27.5 4.5c1.2 11.5-4.5 19.5-14.5 20.5-1.6.2-3.2-.1-4.3-.7" fill="currentColor" fill-opacity=".2"/>
+<path d="M4 29 21 12"/>
+<path d="M13.5 20.5l-.5-5.5M17.5 16.5l-.5-5.5M10 23.5l-5.2-.8M16.5 22.5l5.5.3M20 18.5l5.2.5M14 12.8l4.6-2.2"/>
+</g></symbol>
+<symbol id="w-brain" viewBox="0 0 46 40"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M13.5 27.6c.3 4 3 7 10.7 9.8l.5-3c-3.6-1.6-5.4-3.8-5.6-6.8z" fill="currentColor" fill-opacity=".28"/>
+<path d="M26 27.6c3-2.2 9-2.4 12 .5 1.4 2.3-.9 5-4.8 5.5-4.2.3-7.8-1.4-7.2-6z" fill="currentColor" fill-opacity=".28"/>
+<path d="M28 29.8c2-.9 5-.9 7.6.2M27.8 31.9c2.4-.8 5.4-.5 7.2 1" stroke-width="1"/>
+<g transform="translate(46 0) scale(-1 1)">
+<path d="M5.8 20.5C3.8 12.5 11.5 5 22 4.3c9.5-.6 18 3.5 19.4 11.7 1.2 6.2-3.2 11.2-9.5 12.6-4 .9-8.2.5-12-.4-7.6-.8-13.2-3-14.1-7.7z" fill="currentColor" fill-opacity=".2"/>
+<path d="M9.5 16.5c2.2-4 5.2-3 6.7-.8s4 2.2 5.4-.5 3.2-4.2 5.7-2.6 3.4 3.6 6 2.5" stroke-width="1.2"/>
+<path d="M8.2 21.4c3.2-2.2 5.2 1.6 8.2.1s4.2-3.2 6.7-1.2 4.6 2 7.3.4" stroke-width="1.2"/>
+<path d="M12 11.2c2.6-1.6 4.2 0 5.6 1.6M19.8 8.4c2 1 3.6-.1 5.2.5s3.2 2.1 5.2 1.5M30.6 10.4c2.6.6 4.6 2.2 5 4.3" stroke-width="1.2"/>
+<path d="M12.5 25.6c3.2.6 5.2-1 7.8 0s4.6.5 7.3-1.2" stroke-width="1.2"/>
+<path d="M12 23.4c4-1.1 9-1 14.2 1.4" stroke-width="1"/>
+<path d="M33 18.6c1.8-.2 3.2.7 3.6 2.2" stroke-width="1.2"/>
+</g></g></symbol>
+<symbol id="w-basket" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M9.5 13c-1.5-5 1.5-8.5 5-8.5 2.4 0 3.2 1.6 5.2 1.6 2.4 0 4 1.7 3.6 4.3-.2 1.2-.6 2.2-1.2 2.6" fill="currentColor" fill-opacity=".2"/>
+<path d="M13 8.2c1.2 1.4 1.4 3.2 1 5"/>
+<path d="M5.2 13.2h21.6l-2.4 14.4a2.2 2.2 0 0 1-2.2 1.9H9.8a2.2 2.2 0 0 1-2.2-1.9z" fill="currentColor" fill-opacity=".2"/>
+<path d="M3.5 13.2h25"/>
+<path d="M12 17v8.5M16 17v8.5M20 17v8.5"/>
+<path d="M2.5 16.5c-1 0-1.5.8-1.5 1.8M29.5 16.5c1 0 1.5.8 1.5 1.8"/>
+</g></symbol>
+<symbol id="w-dumbbell" viewBox="0 0 40 34"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+<path d="M13.5 13.5v-2.2a6.5 6.5 0 0 1 13 0v2.2" stroke-width="2.6"/>
+<path d="M12.5 13h15l6.3 16a2 2 0 0 1-1.9 2.7H8.1A2 2 0 0 1 6.2 29z" fill="currentColor" fill-opacity=".22"/>
+</g>
+<text x="20" y="25.6" font-size="6.2" font-weight="800" direction="ltr" style="unicode-bidi:bidi-override" text-anchor="middle" fill="currentColor" stroke="none" font-family="Arial, sans-serif" letter-spacing=".2">20 Kg</text></symbol>
 <symbol id="w-plate" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="27"/><circle cx="32" cy="32" r="17"/></g></symbol>
 <symbol id="w-cup" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 22h34v14a15 15 0 0 1-15 15h-4a15 15 0 0 1-15-15z"/><path d="M44 27h4a7 7 0 0 1 0 14h-5"/><path d="M6 56h42"/><path d="M20 10c-3 3 3 5 0 8M30 10c-3 3 3 5 0 8"/></g></symbol>
 <symbol id="w-fork" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6v16a10 10 0 0 0 20 0V6"/><path d="M32 6v20"/><path d="M32 32v26"/></g></symbol>
@@ -201,9 +253,12 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   <header>
     <div class="top">
       <h1>מטלות הבית</h1>
-      <label class="me" for="me">אני:
-        <select id="me"></select>
-      </label>
+      <div class="topctl">
+        <button class="today-btn" id="goToday" aria-pressed="false">היום</button>
+        <label class="me" for="me">אני:
+          <select id="me"></select>
+        </label>
+      </div>
     </div>
     <div id="banner"></div>
     <div class="weeknav" id="weeknav">
@@ -237,14 +292,14 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'dishes', name: 'שטיפת כלים', who: ALL, slots: 1, days: D6 },
     { id: 'unload', name: 'פינוי כלים', who: ALL, slots: 1, days: D6 },
     { id: 'trash', name: 'פינוי אשפה', who: ALL, slots: 1, days: D6 },
-    { id: 'sibus', name: 'סיבוס', who: ALL, slots: 1, days: D6 },
+    { id: 'sibus', name: 'סיבוס', who: ALL, slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'shop', name: 'קניות לבית', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [1] },
-    { id: 'wash1', name: 'הכנסת מכונה ענבר/חן/אור', who: G1, slots: 1, days: D6 },
-    { id: 'wash2', name: 'הכנסת מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: D6 },
-    { id: 'hang1', name: 'תליית מכונה ענבר/חן/אור', who: G1, slots: 1, days: D6 },
-    { id: 'hang2', name: 'תליית מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: D6 },
-    { id: 'fold1', name: 'קיפול בגדים ענבר/חן/אור', who: G1, slots: 1, days: D6 },
-    { id: 'fold2', name: 'קיפול בגדים עדן/יעקב/בננות', who: G2, slots: 1, days: D6 },
+    { id: 'wash1', name: 'הכנסת מכונה ענבר/חן/אור', who: G1, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'wash2', name: 'הכנסת מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'hang1', name: 'תליית מכונה ענבר/חן/אור', who: G1, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'hang2', name: 'תליית מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'fold1', name: 'קיפול בגדים ענבר/חן/אור', who: G1, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'fold2', name: 'קיפול בגדים עדן/יעקב/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'floor', name: 'שטיפת מרחב ציבורי (לא שואב שוטף)', who: ALL, slots: 1, days: [4] },
     { id: 'room1', name: 'שטיפת פרקטים חדר הורים + חדר אור', who: G1, slots: 1, days: [3] },
     { id: 'room2', name: "שטיפת פרקטים חדר עדן/יעקב + ממ\"ד", who: G2, slots: 1, days: [3] },
@@ -257,13 +312,29 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'sheets', name: 'החלפת מצעים חדר הורים', who: ['חן', 'ענבר'], slots: 1, days: [3] },
     { id: 'cook', name: 'בישולים לשבת', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [5], anchor: { date: '2026-11-13', who: 'חן' } },
     { id: 'bring', name: 'הבאת סבתא בתיה', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [5], every: 2, phase: 1, noCook: true, anchor: { date: '2026-11-13', who: 'ענבר' } },
-    { id: 'back', name: 'החזרת סבתא בתיה (מוצאי שבת)', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [6], every: 2, phase: 1 }
+    { id: 'back', name: 'החזרת סבתא בתיה (מוצאי שבת)', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [6], every: 2, phase: 1 },
+    { id: 'table', name: 'עריכת שולחן לכבוד שבת', who: ['חן', 'ענבר', 'יעקב', 'עדן', 'אור'], slots: 1, days: [5] },
+    { id: 'urn', name: 'מילוי וחיבור מיחם', who: ['חן', 'ענבר', 'יעקב', 'עדן', 'אור'], slots: 1, days: [5] },
+    { id: 'shabbatAm', name: 'עריכת שולחן והכנת ארוחת שבת בבוקר', who: ['ענבר', 'עדן'], slots: 1, days: [6] }
   ];
   var COOK = TASKS.filter(function (t) { return t.id === 'cook'; })[0];
+  var LEVELS = {
+    light: ['sibus', 'trash', 'wash1', 'wash2', 'binBath', 'binParents', 'urn'],
+    mid: ['shabbatAm', 'unload', 'hang1', 'hang2', 'fold1', 'fold2', 'sheets', 'stove', 'table'],
+    hard: ['dishes', 'room1', 'room2', 'floor', 'cook', 'bring', 'back', 'cleanBath', 'cleanParents', 'shop']
+  };
+  var LEVEL_LABEL = { light: 'משימה קלה', mid: 'משימה בינונית', hard: 'משימה קשה' };
+  TASKS.forEach(function (t) { if (t.id === 'shop') t.brain = true; });
+  TASKS.forEach(function (t) { Object.keys(LEVELS).forEach(function (l) { if (LEVELS[l].indexOf(t.id) >= 0) t.level = l; }); });
+  function lvlIcon(l, label) {
+    if (!l) return '';
+    var sym = l === 'light' ? 'w-feather' : l === 'mid' ? 'w-basket' : 'w-dumbbell';
+    return '<svg class="lvl lvl-' + l + '" role="img" aria-label="' + LEVEL_LABEL[l] + '"><title>' + LEVEL_LABEL[l] + '</title><use href="#' + sym + '"/></svg>';
+  }
   TASKS.forEach(function (t, i) { t.off = i + (t.id === 'hang2' ? 1 : 0); });
 
   // ---------- state ----------
-  var st = { monthOff: 0, offset: 0, day: 0, tab: 'day', me: '', onlyMine: false, open: null, draft: {}, main: {}, extra: {}, mode: 'loading' };
+  var st = { hlToday: false, monthOff: 0, offset: 0, day: 0, tab: 'day', me: '', onlyMine: false, open: null, draft: {}, main: {}, extra: {}, mode: 'loading' };
   var db = null;
   var els = {
     main: document.getElementById('main'), me: document.getElementById('me'), banner: document.getElementById('banner'),
@@ -403,6 +474,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       ? '<div class="banner">הנתונים נשמרים בלבד במכשיר הזה כרגע. התחברו ל-Firebase לסנכרון מלא בענן.</div>' : '';
     var s = weekStart(st.offset), e = dayDate(st.offset, 6);
     els.weekLabel.innerHTML = (st.offset === 0 ? 'השבוע' : st.offset === -1 ? 'שבוע שעבר' : 'שבוע ' + short(s)) + '<small>' + short(s) + ' – ' + short(e) + '</small>';
+    document.getElementById('goToday').setAttribute('aria-pressed', st.hlToday ? 'true' : 'false');
     document.getElementById('weeknav').hidden = st.tab !== 'day';
     document.getElementById('tabMonth').setAttribute('aria-selected', st.tab === 'month');
     document.getElementById('nextWeek').disabled = st.offset >= MAX_OFF;
@@ -418,8 +490,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       var dd = dayDate(st.offset, i), k = key(dd), occ = occOn(dd), ds = dayStats(k, occ), done = ds.done;
       var pct = ds.total ? Math.round(done * 100 / ds.total) : 0;
       var isToday = k === key(today);
-      h += '<button class="day' + (isToday ? ' today' : '') + '" data-day="' + i + '" aria-pressed="' + (i === st.day) + '" aria-label="יום ' + DAYS[i] + ', ' + done + ' מתוך ' + ds.total + '">' +
-        '<span class="d">' + DAYS[i] + '</span><span class="bar"><i style="width:' + pct + '%"></i></span><span class="n">' + done + '/' + ds.total + '</span></button>';
+      h += '<button class="day' + (isToday ? ' today' : '') + (isToday && st.hlToday ? ' hl' : '') + '" data-day="' + i + '" aria-pressed="' + (i === st.day) + '" aria-label="יום ' + DAYS[i] + ', ' + done + ' מתוך ' + ds.total + '">' +
+        '<span class="dt">' + pad(dd.getDate()) + '/' + pad(dd.getMonth() + 1) + '</span><span class="d">' + DAYS[i] + '</span><span class="bar"><i style="width:' + pct + '%"></i></span><span class="n">' + done + '/' + ds.total + '</span></button>';
     }
     h += '</div>';
 
@@ -427,6 +499,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     var list = all.filter(function (o) { return !st.onlyMine || !st.me || assignee(o.t, dd2, o.slot) === st.me; });
     var dsum = dayStats(k2, all), doneN = dsum.done;
     h += '<div class="dayhead"><h2>' + (st.day === 6 ? 'שבת' : 'יום ' + DAYS[st.day] + "'") + ', ' + short(dd2) + '</h2><span class="sub">' + doneN + ' מתוך ' + dsum.total + ' בוצעו</span></div>';
+    h += '<p class="legend"><span>' + lvlIcon('light') + 'קלה</span><span>' + lvlIcon('mid') + 'בינונית</span><span>' + lvlIcon('hard') + 'קשה</span></p>';
     if (st.me) h += '<label class="filter"><input type="checkbox" id="mine"' + (st.onlyMine ? ' checked' : '') + '> הצג רק את התורים של ' + esc(st.me) + '</label>';
 
     h += '<div class="list">' + list.map(function (o) { return renderOcc(o, k2); }).join('') + '</div>';
@@ -448,7 +521,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     } else {
       meta = 'התור של <span class="turn">' + badge(who) + esc(who) + '</span>';
     }
-    var dots = '';
+    var dots = (t.brain ? '<svg class="brain" role="img" aria-label="דורש חשיבה ותכנון מראש"><title>דורש חשיבה ותכנון מראש</title><use href="#w-brain"/></svg>' : '') + lvlIcon(t.level);
     var h = '<div class="occ ' + cls + '"><button class="row" data-open="' + id + '" aria-expanded="' + (st.open === id) + '">' +
       '<span class="check" aria-hidden="true">' + icon + '</span><span class="body"><div class="name">' + title + '</div><div class="meta">' + meta + '</div></span>' + dots + '</button>';
     if (r) {
@@ -497,7 +570,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       });
       if (!inMonth) { h += '<div class="cell off" aria-hidden="true"></div>'; continue; }
       var pct = ms.total ? Math.round(done * 100 / ms.total) : 0;
-      h += '<button class="cell' + (k === key(today) ? ' today' : '') + '" data-goto="' + k + '" aria-label="' + dd.getDate() + ' ב' + MONTHS[mo] + '">' +
+      h += '<button class="cell' + (k === key(today) ? ' today' : '') + (k === key(today) && st.hlToday ? ' hl' : '') + '" data-goto="' + k + '" aria-label="' + dd.getDate() + ' ב' + MONTHS[mo] + '">' +
         '<span class="dn">' + dd.getDate() + '</span>' +
         (st.me ? '<span class="mine">' + mine + ' שלי</span>' : '') +
         '<span class="tail"><span class="bar"><i style="width:' + pct + '%"></i></span><span class="cnt">' + done + '/' + ms.total + '</span></span></button>';
@@ -553,7 +626,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       '<li>מטלות של חלק מבני המשפחה לא עוברות שיקול דעת. הולכים לפי התדירות, ללא פספוסים.</li>' +
       '<li>מי שלא יכול לבצע את המטלה שלו מוצא מחליף ומחזיר לו אחר כך.</li>' +
       '<li>אם לא נמצא מחליף והמטלה לא בוצעה, התורן מפקיד 5 ₪ בקופה בביט.</li>' +
-      '<li>כשיצטבר סכום נאה, מחליטים יחד על פעילות משפחתית חוויתית.</li></ol></div>';
+      '<li>כשיצטבר סכום נאה, מחליטים יחד על פעילות משפחתית חוויתית.</li>' +
+      '<li class="rule-burgundy">מי שתורן בישולים לשבת אחראי לומר לתורן קניות עד יום שני בצהריים איזה מצרכים יש לקנות לבישולים לשבת (לסעודה ראשונה ושלישית בעיקר).</li></ol></div>';
     return h;
   }
 
@@ -563,6 +637,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (!t) return;
     if (t.id === 'prevWeek') { st.offset = Math.max(MIN_OFF, st.offset - 1); st.open = null; render(); return; }
     if (t.id === 'nextWeek') { st.offset = Math.min(MAX_OFF, st.offset + 1); st.open = null; render(); return; }
+    if (t.id === 'goToday') { st.hlToday = true; st.offset = 0; st.day = today.getDay(); st.tab = 'day'; st.monthOff = 0; st.open = null; render(); return; }
     if (t.id === 'tabDay') { st.tab = 'day'; render(); return; }
     if (t.id === 'prevMonth') { st.monthOff = Math.max(-1, st.monthOff - 1); render(); return; }
     if (t.id === 'nextMonth') { st.monthOff = Math.min(2, st.monthOff + 1); render(); return; }
