@@ -349,11 +349,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   };
   // זמן משוער בדקות לכל ביצוע (1 עד 60). אפשר לשנות כאן.
   var MINUTES = {
-    dishes: 20, unload: 8, trash: 5, sibus: 5, shop: 60,
-    wash1: 5, wash2: 5, hang1: 12, hang2: 15, fold1: 15, fold2: 20,
-    floor: 40, room1: 35, room2: 35, binBath: 3, binParents: 5, stove: 15,
-    cleanBath: 35, cleanParents: 45, sheets: 15, cook: 60, bring: 40, back: 40,
-    table: 15, urn: 5, shabbatAm: 25
+    dishes: 20, unload: 10, trash: 5, sibus: 10, shop: 90,
+    wash1: 10, wash2: 10, hang1: 15, hang2: 15, fold1: 20, fold2: 20,
+    floor: 45, room1: 35, room2: 35, binBath: 3, binParents: 5, stove: 15,
+    cleanBath: 35, cleanParents: 45, sheets: 15, cook: 180, bring: 120, back: 120,
+    table: 20, urn: 5, shabbatAm: 25
   };
   function durClass(m) { return m <= 15 ? 'g' : m <= 30 ? 'o' : 'r'; }
   function durBlock(t, dow) {
@@ -361,7 +361,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     var f = Math.min(1, m / 60).toFixed(3);
     return '<span class="dur dur-' + durClass(m) + '" title="זמן משוער: ' + m + ' דקות"><span class="dur-pill"><b>' + m + '</b> דק\'</span><span class="dur-bar"><i style="inset-inline-start:calc((100% - 3px) * ' + f + ')"></i></span></span>';
   }
-  TASKS.forEach(function (t) { t.min = MINUTES[t.id]; if (t.id === 'dishes') t.minByDay = { 5: 60 }; });
+  TASKS.forEach(function (t) { t.min = MINUTES[t.id]; if (t.id === 'dishes') t.minByDay = { 5: 60 }; if (t.id === 'unload') t.minByDay = { 5: 20 }; });
   var LEVEL_LABEL = { light: 'משימה קלה', mid: 'משימה בינונית', hard: 'משימה קשה' };
   TASKS.forEach(function (t) { if (t.id === 'shop') t.brain = true; });
   TASKS.forEach(function (t) { Object.keys(LEVELS).forEach(function (l) { if (LEVELS[l].indexOf(t.id) >= 0) t.level = l; }); });
