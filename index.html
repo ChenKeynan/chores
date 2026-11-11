@@ -1,4 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
 <title>מטלות הבית</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600&family=Secular+One&display=swap">
@@ -6,6 +7,7 @@
 <!-- ספריות Firebase בגרסת Compat לחיבור מהיר ב-HTML -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
 <style>
 :root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
@@ -239,6 +241,15 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .ask-btns button.alt { background: transparent; color: var(--ink); border: 2px solid var(--line); }
 .kitty .paynote { margin: 10px 0 0; font-size: .78rem; color: var(--muted); }
 .panel .wb { color: #fff; font-weight: 700; background: var(--wb-bg); padding: 1px 8px; border-radius: 6px; }
+.gate { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg); }
+.gate[hidden] { display: none; }
+.gate-box { width: min(360px, 100%); text-align: center; background: var(--surface); color: var(--ink); border: 2px solid var(--accent); border-radius: 20px; padding: 28px 22px; }
+.gate-box h1 { margin: 0 0 12px; font-family: var(--font-display); font-size: 1.7rem; }
+.gate-box p { margin: 0 0 18px; }
+.gate-box button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 12px 28px; font: inherit; font-weight: 700; cursor: pointer; }
+.gate-err { color: var(--warn); margin: 12px 0 0 !important; min-height: 1em; }
+.authfoot { text-align: center; font-size: .8rem; color: var(--muted); margin: 18px 0 8px; }
+.authfoot button { background: none; border: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
 </style>
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -305,9 +316,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     </div>
   </header>
   <main id="main"></main>
+  <p id="authfoot" class="authfoot" hidden></p>
 </div>
 <div id="toast" class="toast" hidden></div>
 
+<div id="gate" class="gate" hidden></div>
 <script>
 (function () {
   var PEOPLE = [
@@ -677,7 +690,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
         '<hr class="sep"><div><h3><span class="wb">אין צורך במטלה היום?</span> ביטול ללא קנס, בהזנת סיבה מוצדקת</h3>' +
         '<input class="reason" id="reason" type="text" maxlength="120" placeholder="למשל: אין כלים בכיור, כולם בחופשה" value="' + esc(d.reason || '') + '"></div>' +
         '<div class="actions"><button class="btn ghost" id="cancelBtn" data-do="cancel" ' + ((d.reason || '').trim().length >= 3 ? '' : 'disabled') + '>בטל מטלה</button></div>' +
-        '<hr class="sep"><div><h3>לא בוצעה ואין מחליף?</h3></div>' +
+        '<hr class="sep"><div><h3><span class="wb">לא בוצעה ואין מחליף?</span></h3></div>' +
         '<div class="actions"><button class="btn alt" data-do="missed">' + esc(who) + ' מפקיד/ה 5 ' + NIS + ' לקופה</button><button class="btn ghost" data-do="close">סגור</button></div></div>';
     }
     return h + '</div>';
@@ -840,16 +853,63 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
-      st.mode = 'live';
-      db.collection('done').onSnapshot(function (snap) {
-        st.main = mapSnap(snap);
+      var unsub = null;
+      function startLive() {
+        if (unsub) return;
         st.mode = 'live';
-        render();
-      }, function (err) {
-        console.error(err);
-        st.mode = 'local';
-        render();
-      });
+        unsub = db.collection('done').onSnapshot(function (snap) {
+          st.main = mapSnap(snap);
+          st.mode = 'live';
+          render();
+        }, function (err) {
+          console.error(err);
+          st.mode = 'local';
+          render();
+        });
+      }
+      function stopLive() { if (unsub) { unsub(); unsub = null; } st.main = {}; }
+      if (typeof firebase.auth === 'function') {
+        var ALLOWED = ['chenkeynan@gmail.com', 'inbarkeynan@gmail.com', 'edenkeynan@gmail.com', 'orkeynan3@gmail.com', 'yaakov414@gmail.com'];
+        var auth = firebase.auth();
+        var gate = document.getElementById('gate');
+        var foot = document.getElementById('authfoot');
+        function showGate(kind, email) {
+          var g = '<div class="gate-box"><h1>מטלות הבית</h1>';
+          if (kind === 'denied') {
+            g += '<p>החשבון <b dir="ltr">' + esc(email) + '</b> אינו מורשה להיכנס.</p><button type="button" id="gateOut">החלפת חשבון</button>';
+          } else {
+            g += '<p>הכניסה למשפחה בלבד.</p><button type="button" id="gateIn">כניסה עם Google</button>';
+          }
+          g += '<p class="gate-err" id="gateErr"></p></div>';
+          gate.innerHTML = g; gate.hidden = false;
+          if (foot) foot.hidden = true;
+        }
+        gate.addEventListener('click', function (ev) {
+          var b = ev.target.closest('button'); if (!b) return;
+          if (b.id === 'gateOut') { auth.signOut(); return; }
+          if (b.id === 'gateIn') {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            auth.signInWithPopup(provider).catch(function (e) {
+              if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) { auth.signInWithRedirect(provider); return; }
+              if (e && (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request')) return;
+              var el = document.getElementById('gateErr'); if (el) el.textContent = 'הכניסה נכשלה, נסו שוב.';
+            });
+          }
+        });
+        if (foot) foot.addEventListener('click', function (ev) { if (ev.target.closest('button')) auth.signOut(); });
+        showGate('in');
+        auth.onAuthStateChanged(function (u) {
+          if (!u) { stopLive(); showGate('in'); render(); return; }
+          var em = (u.email || '').toLowerCase();
+          if (ALLOWED.indexOf(em) < 0) { stopLive(); showGate('denied', u.email || ''); render(); return; }
+          gate.hidden = true;
+          if (foot) { foot.hidden = false; foot.innerHTML = 'מחובר כ-<span dir="ltr">' + esc(em) + '</span> · <button type="button">התנתקות</button>'; }
+          startLive();
+        });
+      } else {
+        startLive();
+      }
     } else {
       st.mode = 'local';
     }
