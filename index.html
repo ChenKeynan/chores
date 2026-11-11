@@ -250,9 +250,20 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .gate-err { color: var(--warn); margin: 12px 0 0 !important; min-height: 1em; }
 .authfoot { text-align: center; font-size: .8rem; color: var(--muted); margin: 18px 0 8px; }
 .authfoot button { background: none; border: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
+:root { --sync-g: #1f9d55; }
+.titlegrp { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sync { display: inline-flex; align-items: center; gap: 5px; font-size: .85rem; font-weight: 600; color: var(--dur-g); }
+.sync[hidden] { display: none; }
+.sync-ic { width: 22px; height: 22px; flex: none; }
+.sync.saved .sync-ic { color: var(--sync-g); }
+.sync.saving .sync-ic { animation: sync-spin 1s linear infinite; }
+@keyframes sync-spin { to { transform: rotate(-360deg); } }
+@media (prefers-reduced-motion: reduce) { .sync.saving .sync-ic { animation: none; } }
 </style>
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-sync" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 0-13.7-5.6L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 12a8 8 0 0 0 13.7 5.6L20 15.5"/><path d="M20 20v-4.5h-4.5"/></g></symbol>
+<symbol id="i-cloud-ok" viewBox="0 0 24 24"><path d="M6.5 19A4.5 4.5 0 0 1 6 10.03 6 6 0 0 1 17.6 9.3 4.85 4.85 0 0 1 17.5 19Z" fill="currentColor"/><path d="M8.8 13.6l2.4 2.4 4.2-4.7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="w-feather" viewBox="0 0 32 32"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
 <path d="M11.1 22.7L13.0 21.3L14.8 20.1L16.5 19.2L18.2 18.5L19.8 18.3L21.3 18.5L22.6 19.1L24.3 17.6L25.6 15.9L26.6 14.2L27.3 12.6L27.8 11.1L28.1 9.7L28.2 8.5L28.3 7.4L28.3 6.5L28.2 5.6L28.0 4.7L27.7 3.9L26.5 3L25.3 2.2L24.2 2.3L23.1 2.6L22.1 3.0L21.2 3.5L20.4 4.0L19.7 4.6L19.2 5.3L18.9 6.0L18.6 6.8L17.7 9.8L15.4 10.5L13.4 11.6L11.7 13.1L10.4 14.8L9.4 16.7L8.7 18.8L8.1 21.0Z" fill="currentColor" fill-opacity=".14" stroke="none"/>
 <path d="M8.5 23.3L11.1 22.7 M8.5 23.3L8.1 21.0 M9.3 22.2L13.0 21.3 M9.3 22.2L8.7 18.8 M10.0 21.0L14.8 20.1 M10.0 21.0L9.4 16.7 M10.9 19.9L16.5 19.2 M10.9 19.9L10.4 14.8 M11.7 18.9L18.2 18.5 M11.7 18.9L11.7 13.1 M12.7 18.0L19.8 18.3 M12.7 18.0L13.4 11.6 M13.8 17.2L21.3 18.5 M13.8 17.2L15.4 10.5 M15.0 16.5L22.6 19.1 M15.0 16.5L17.7 9.8 M16.2 15.9L24.3 17.6 M17.3 15.1L25.6 15.9 M18.3 14.3L26.6 14.2 M18.3 14.3L18.6 6.8 M19.1 13.3L27.3 12.6 M19.1 13.3L18.9 6.0 M20.0 12.3L27.8 11.1 M20.0 12.3L19.2 5.3 M20.7 11.2L28.1 9.7 M20.7 11.2L19.7 4.6 M21.5 10.1L28.2 8.5 M21.5 10.1L20.4 4.0 M22.2 9.0L28.3 7.4 M22.2 9.0L21.2 3.5 M23.0 7.8L28.3 6.5 M23.0 7.8L22.1 3.0 M23.8 6.6L28.2 5.6 M23.8 6.6L23.1 2.6 M24.6 5.4L28.0 4.7 M24.6 5.4L24.2 2.3 M25.5 4.2L27.7 3.9 M25.5 4.2L25.3 2.2" stroke-width=".7"/>
@@ -295,7 +306,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 <div class="wrap" lang="he">
   <header>
     <div class="top">
-      <h1>מטלות הבית</h1>
+      <div class="titlegrp"><h1>מטלות הבית</h1><span class="sync" id="sync" role="status" aria-live="polite" hidden><svg class="sync-ic" aria-hidden="true"><use href="#i-sync"/></svg><span>נשמר</span></span></div>
       <div class="topctl">
         <button class="today-btn" id="goToday" aria-pressed="false">היום</button>
         <label class="me" for="me">אני:
@@ -535,17 +546,33 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   // ---------- storage ----------
   function save(id, data) {
     if (db) {
-      return db.collection('done').doc(id).set(data).catch(function (e) { writeFail(e); throw e; });
+      return track(db.collection('done').doc(id).set(data).catch(function (e) { writeFail(e); throw e; }));
     }
-    st.main[id] = data; render(); return Promise.resolve();
+    st.main[id] = data; render(); return track(Promise.resolve());
   }
   function patch(id, data) {
-    if (db) return db.collection('done').doc(id).update(data).catch(function (e) { writeFail(e); throw e; });
-    var r = st.main[id]; if (r) Object.keys(data).forEach(function (k) { r[k] = data[k]; }); render(); return Promise.resolve();
+    if (db) return track(db.collection('done').doc(id).update(data).catch(function (e) { writeFail(e); throw e; }));
+    var r = st.main[id]; if (r) Object.keys(data).forEach(function (k) { r[k] = data[k]; }); render(); return track(Promise.resolve());
   }
   function remove(id) {
-    if (db) return db.collection('done').doc(id).delete().catch(function (e) { writeFail(e); throw e; });
-    delete st.main[id]; render(); return Promise.resolve();
+    if (db) return track(db.collection('done').doc(id).delete().catch(function (e) { writeFail(e); throw e; }));
+    delete st.main[id]; render(); return track(Promise.resolve());
+  }
+  // סטטוס שמירה: חצים עגולים בזמן השמירה, ענן ירוק עם V אחרי שנשמר בפועל
+  var pend = 0;
+  function syncSet(s) {
+    var el = document.getElementById('sync'); if (!el) return;
+    if (s === 'idle') { el.hidden = true; return; }
+    el.hidden = false; el.className = 'sync ' + s;
+    el.querySelector('use').setAttribute('href', s === 'saving' ? '#i-sync' : '#i-cloud-ok');
+  }
+  function track(p) {
+    pend++; syncSet('saving'); var t0 = Date.now();
+    function fin(ok) {
+      pend--; if (pend > 0) return;
+      setTimeout(function () { if (pend === 0) syncSet(ok ? 'saved' : 'idle'); }, Math.max(0, 700 - (Date.now() - t0)));
+    }
+    return p.then(function (v) { fin(true); return v; }, function (e) { fin(false); throw e; });
   }
   function writeFail(e) {
     toast(e && e.code === 'permission-denied' ? 'אין לך הרשאת עריכה. בדקו את חוקי האבטחה ב-Firebase.' : 'השמירה נכשלה. נסו שוב.');
