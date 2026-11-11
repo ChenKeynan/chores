@@ -893,7 +893,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
             auth.signInWithPopup(provider).catch(function (e) {
               if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) { auth.signInWithRedirect(provider); return; }
               if (e && (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request')) return;
-              var el = document.getElementById('gateErr'); if (el) el.textContent = 'הכניסה נכשלה, נסו שוב.';
+              console.error(e); var el = document.getElementById('gateErr'); if (el) el.innerHTML = 'הכניסה נכשלה, נסו שוב.<br><span dir="ltr" style="font-size:.75rem">' + esc((e && (e.code || e.message)) || '') + '</span>';
             });
           }
         });
