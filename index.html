@@ -186,7 +186,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .row .body { margin-inline-end: 4px; }
 .day .dt { font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1; }
 .weeknav .label small { font-size: calc(.8rem + 2pt); font-weight: 700; }
-.rule-burgundy { color: var(--burgundy); }
+.rule-burgundy { color: var(--dur-r); font-weight: 700; }
 .dur { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 46px; flex: none; font-size: .78rem; font-weight: 600; line-height: 1; white-space: nowrap; }
 .dur b { font-size: .88rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .dur-g { color: var(--dur-g); }
@@ -230,6 +230,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .notice-box button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 12px 34px; font: inherit; font-weight: 700; cursor: pointer; }
 .nis { width: 1em; height: 1em; vertical-align: -.12em; margin-inline-start: .12em; flex: none; }
 .kitty .amt .nis { width: .9em; height: .9em; vertical-align: -.05em; }
+.kitty .kbody { flex: 1; min-width: 0; }
+.paynow { display: inline-block; margin-top: 12px; padding: 11px 28px; border-radius: 12px; background: var(--coin); color: #fff; font-weight: 700; text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+.paynow:active { transform: translateY(1px); }
+.legendrow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; }
+.legendrow .filter { font-weight: 700; color: var(--ink); white-space: nowrap; }
 </style>
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -317,14 +322,14 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'trash', name: 'פינוי אשפה', who: ALL, slots: 1, days: D6 },
     { id: 'sibus', name: 'סיבוס', who: ALL, slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'shop', name: 'קניות לבית', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [1] },
-    { id: 'wash1', name: 'הכנסת מכונה ענבר/חן/אור', who: G1, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'wash1', name: 'הכנסת מכונה ענבר', who: ['ענבר'], slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'wash2', name: 'הכנסת מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
-    { id: 'hang1', name: 'תליית מכונה ענבר/חן/אור', who: G1, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'hang1', name: 'תליית מכונה חן/אור', who: ['חן', 'אור'], slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'hang2', name: 'תליית מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
-    { id: 'fold1', name: 'קיפול בגדים ענבר/חן/אור', who: G1, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'fold1', name: 'קיפול בגדים חן/אור', who: ['חן', 'אור'], slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'fold2', name: 'קיפול בגדים עדן/יעקב/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'floor', name: 'שטיפת מרחב ציבורי (לא שואב שוטף)', who: ALL, slots: 1, days: [4] },
-    { id: 'room1', name: 'שטיפת פרקטים חדר הורים + חדר אור', who: G1, slots: 1, days: [3] },
+    { id: 'room1', name: 'שטיפת פרקטים חדר הורים + חדר אור', who: G1, slots: 1, days: [2] },
     { id: 'room2', name: "שטיפת פרקטים חדר עדן/יעקב + ממ\"ד", who: G2, slots: 1, days: [3] },
     // בישולים לשבת: ביום ו'. סבתא בתיה: הבאה ביום ו' אחת לשבועיים, החזרה במוצאי שבת (יום ש'). phase קובע באיזה שבוע מתחיל המחזור.
     { id: 'binBath', name: 'פינוי פח אמבטיה', who: ['עדן', 'יעקב', 'אור'], slots: 1, days: [1, 4] },
@@ -332,7 +337,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'stove', name: 'ניקיון כיריים', who: ALL, slots: 1, days: [5] },
     { id: 'cleanBath', name: 'ניקוי אמבטיה', who: ['עדן', 'יעקב', 'אור'], slots: 1, days: [2], every: 2, phase: 0 },
     { id: 'cleanParents', name: 'ניקוי מקלחת הורים + שירותי אורחים', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [2], every: 2, phase: 0 },
-    { id: 'sheets', name: 'החלפת מצעים חדר הורים', who: ['חן', 'ענבר'], slots: 1, days: [3] },
+    { id: 'sheets', name: 'החלפת מצעים חדר הורים', who: ['חן', 'ענבר'], slots: 1, days: [0] },
     { id: 'cook', name: 'בישולים לשבת', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [5], anchor: { date: '2026-11-13', who: 'חן' } },
     { id: 'bring', name: 'הבאת סבתא בתיה', who: ['חן', 'ענבר', 'אור'], slots: 1, days: [5], every: 2, phase: 1, noCook: true, anchor: { date: '2026-11-13', who: 'ענבר' } },
     { id: 'back', name: 'החזרת סבתא בתיה (מוצאי שבת)', who: ['חן', 'אור'], slots: 1, days: [6], every: 2, phase: 1 },
@@ -555,8 +560,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     var list = all.filter(function (o) { return !st.onlyMine || !st.me || assignee(o.t, dd2, o.slot) === st.me; });
     var dsum = dayStats(k2, all), doneN = dsum.done;
     h += '<div class="dayhead"><h2>' + (st.day === 6 ? 'שבת' : 'יום ' + DAYS[st.day] + "'") + ', ' + short(dd2) + '</h2><span class="sub">' + doneN + ' מתוך ' + dsum.total + ' בוצעו</span></div>';
-    h += '<p class="legend"><span>' + lvlIcon('light') + 'קלה</span><span>' + lvlIcon('mid') + 'בינונית</span><span>' + lvlIcon('hard') + 'קשה</span></p>';
-    if (st.me) h += '<label class="filter"><input type="checkbox" id="mine"' + (st.onlyMine ? ' checked' : '') + '> הצג רק את התורים של ' + esc(st.me) + '</label>';
+    h += '<div class="legendrow">' + (st.me ? '<label class="filter"><input type="checkbox" id="mine"' + (st.onlyMine ? ' checked' : '') + '> רק של ' + esc(st.me) + '</label>' : '') + '<p class="legend"><span>' + lvlIcon('light') + 'קלה</span><span>' + lvlIcon('mid') + 'בינונית</span><span>' + lvlIcon('hard') + 'קשה</span></p></div>';
 
     h += '<div class="list">' + list.map(function (o) { return renderOcc(o, k2); }).join('') + '</div>';
     if (!list.length) h += '<p class="empty">אין מטלות להצגה ביום הזה.</p>';
@@ -660,7 +664,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       else if (r.status === 'done' && r.instead && !r.repaid) { var k = r.instead + '|' + r.by; debts[k] = (debts[k] || 0) + 1; }
     });
 
-    var h = '<div class="card kitty"><div class="amt">' + (kitty * 5) + NIS + '</div><p><strong>הקופה המשפחתית</strong><br>' + kitty + ' מטלות שלא בוצעו. כשיצטבר סכום נאה, בוחרים יחד פעילות משפחתית.</p></div>';
+    var h = '<div class="card kitty"><div class="amt">' + (kitty * 5) + NIS + '</div><div class="kbody"><p><strong>הקופה המשפחתית</strong><br>' + kitty + ' מטלות שלא בוצעו. כשיצטבר סכום נאה, בוחרים יחד פעילות משפחתית.</p><a class="paynow" href="https://www.bitpay.co.il/app/share-info?i=55vP46t9&j=true" target="_blank" rel="noopener">העבר עכשיו</a></div></div>';
 
     h += '<div class="card"><h2>מי עשה כמה, בשבוע הזה</h2>' +
       '<p class="empty">' + weekDone + ' מתוך ' + weekTotal + ' ביצועים נרשמו' + (missedWeek ? ', ' + missedWeek + ' לא בוצעו' : '') + (cancelledWeek ? ', ' + cancelledWeek + ' בוטלו' : '') + '.</p>' +
