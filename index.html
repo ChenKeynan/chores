@@ -13,7 +13,7 @@
   --bg: #eef3f1; --surface: #ffffff; --ink: #12302b; --muted: #5d7772; --line: #d3e0dc;
   --accent: #0e7a6b; --accent-ink: #ffffff; --accent-soft: #d9efe9; --warn: #b4461f;
   --warn-soft: #fbe6dd; --coin: #b98400; --coin-soft: #f8edcb;
-  --ps: 55%; --pl: 86%; --pt: 22%; --today: #4a148c; --burgundy: #800020; --dur-g: #2e7d32; --dur-o: #e07b00; --dur-r: #c62828;
+  --wb-bg: #0e7a6b; --ps: 55%; --pl: 86%; --pt: 22%; --today: #4a148c; --burgundy: #800020; --dur-g: #2e7d32; --dur-o: #e07b00; --dur-r: #c62828;
   --font-display: "Secular One", "Rubik", "Arial Hebrew", Arial, sans-serif;
   --font-body: "Rubik", "Arial Hebrew", Arial, sans-serif;
 }
@@ -22,14 +22,14 @@
     --bg: #0d1c19; --surface: #152724; --ink: #e3f1ed; --muted: #8fb0a9; --line: #264540;
     --accent: #3fc4ae; --accent-ink: #06221d; --accent-soft: #1b3d37;
     --warn: #ff9a73; --warn-soft: #3a2218; --coin: #f2c14e; --coin-soft: #3a3016;
-    --ps: 45%; --pl: 26%; --pt: 88%; --today: #b794f6; --burgundy: #e5849a; --dur-g: #6fcf7f; --dur-o: #ffb454; --dur-r: #ff7a7a; color-scheme: dark;
+    --wb-bg: transparent; --ps: 45%; --pl: 26%; --pt: 88%; --today: #b794f6; --burgundy: #e5849a; --dur-g: #6fcf7f; --dur-o: #ffb454; --dur-r: #ff7a7a; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0d1c19; --surface: #152724; --ink: #e3f1ed; --muted: #8fb0a9; --line: #264540;
   --accent: #3fc4ae; --accent-ink: #06221d; --accent-soft: #1b3d37;
   --warn: #ff9a73; --warn-soft: #3a2218; --coin: #f2c14e; --coin-soft: #3a3016;
-  --ps: 45%; --pl: 26%; --pt: 88%; --today: #b794f6; --burgundy: #e5849a; --dur-g: #6fcf7f; --dur-o: #ffb454; --dur-r: #ff7a7a; color-scheme: dark;
+  --wb-bg: transparent; --ps: 45%; --pl: 26%; --pt: 88%; --today: #b794f6; --burgundy: #e5849a; --dur-g: #6fcf7f; --dur-o: #ffb454; --dur-r: #ff7a7a; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body {
@@ -237,6 +237,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .legendrow .filter { font-weight: 700; color: var(--ink); white-space: nowrap; }
 .ask-btns { display: flex; flex-direction: column; gap: 10px; }
 .ask-btns button.alt { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+.kitty .paynote { margin: 10px 0 0; font-size: .78rem; color: var(--muted); }
+.panel .wb { color: #fff; font-weight: 700; background: var(--wb-bg); padding: 1px 8px; border-radius: 6px; }
 </style>
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -668,11 +670,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       h += '<button class="undo" data-undo="' + id + '">ביטול הסימון</button>';
     } else if (st.open === id) {
       var d = st.draft;
-      h += '<div class="panel" data-occ="' + id + '"><div><h3>התור של ' + esc(who) + '. מי ביצע בפועל?</h3><div class="chips">' +
+      h += '<div class="panel" data-occ="' + id + '"><div><h3>התור של ' + esc(who) + '. <span class="wb">מי ביצע בפועל?</span></h3><div class="chips">' +
         chipsFor(t, 'by', d.by) + '</div>' +
         (d.by && d.by !== who ? '<p class="meta">' + esc(who) + ' יחזיר/ה ל' + esc(d.by) + ' החלפה.</p>' : '') + '</div>' +
         '<div class="actions"><button class="btn" data-do="done" ' + (d.by ? '' : 'disabled') + '>סמן כבוצע</button></div>' +
-        '<hr class="sep"><div><h3>אין צורך במטלה היום? ביטול ללא קנס, בהזנת סיבה מוצדקת</h3>' +
+        '<hr class="sep"><div><h3><span class="wb">אין צורך במטלה היום?</span> ביטול ללא קנס, בהזנת סיבה מוצדקת</h3>' +
         '<input class="reason" id="reason" type="text" maxlength="120" placeholder="למשל: אין כלים בכיור, כולם בחופשה" value="' + esc(d.reason || '') + '"></div>' +
         '<div class="actions"><button class="btn ghost" id="cancelBtn" data-do="cancel" ' + ((d.reason || '').trim().length >= 3 ? '' : 'disabled') + '>בטל מטלה</button></div>' +
         '<hr class="sep"><div><h3>לא בוצעה ואין מחליף?</h3></div>' +
@@ -744,7 +746,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       else if (r.status === 'done' && r.instead && !r.repaid) { var k = r.instead + '|' + r.by; debts[k] = (debts[k] || 0) + 1; }
     });
 
-    var h = '<div class="card kitty"><div class="amt">' + (kitty * 5) + NIS + '</div><div class="kbody"><p><strong>הקופה המשפחתית</strong><br>' + kitty + ' מטלות שלא בוצעו. כשיצטבר סכום נאה, בוחרים יחד פעילות משפחתית.</p><a class="paynow" href="https://www.bitpay.co.il/app/share-info?i=55vP46t9&j=true" target="_blank" rel="noopener">העבר עכשיו</a></div></div>';
+    var h = '<div class="card kitty"><div class="amt">' + (kitty * 5) + NIS + '</div><div class="kbody"><p><strong>הקופה המשפחתית</strong><br>' + kitty + ' מטלות שלא בוצעו. כשיצטבר סכום נאה, בוחרים יחד פעילות משפחתית.</p><a class="paynow" href="https://www.bitpay.co.il/app/share-info?i=55vP46t9&j=true" target="_blank" rel="noopener">העבר עכשיו</a><p class="paynote">הכסף במסך זה הוא וירטואלי. לחיצה על הכפתור מעבירה כסף בפועל</p></div></div>';
 
     h += '<div class="card"><h2>מי עשה כמה, בשבוע הזה</h2>' +
       '<p class="empty">' + weekDone + ' מתוך ' + weekTotal + ' ביצועים נרשמו' + (missedWeek ? ', ' + missedWeek + ' לא בוצעו' : '') + (cancelledWeek ? ', ' + cancelledWeek + ' בוטלו' : '') + '.</p>' +
