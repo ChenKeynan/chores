@@ -235,6 +235,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .paynow:active { transform: translateY(1px); }
 .legendrow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; }
 .legendrow .filter { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.ask-btns { display: flex; flex-direction: column; gap: 10px; }
+.ask-btns button.alt { background: transparent; color: var(--ink); border: 2px solid var(--line); }
 </style>
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -433,21 +435,74 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (!t.every && n > 2 && per % n === 0) c += w;
     return c;
   }
-  function assignee(t, date, slot) {
+  function baseAssignee(t, date, slot) {
     var n = t.who.length;
     var i = (((rawC(t, date, slot) + (t.shift || 0)) % n) + n) % n, p = t.who[i];
     if (t.noCook) {
-      var cook = assignee(COOK, date, 1);
+      var cook = baseAssignee(COOK, date, 1);
       if ((cook === 'חן' || cook === 'ענבר') && p === cook) p = t.who[(i + 1) % n];
     }
     if (t.noBring && date.getDay() === 5) {
       var bw = weekIdx(date) - BRING.phase;
       if ((((bw % BRING.every) + BRING.every) % BRING.every) === 0) {
-        var br = assignee(BRING, date, 1);
+        var br = baseAssignee(BRING, date, 1);
         if (p === br) p = t.who[(i + 1) % n];
       }
     }
     return p;
+  }
+  // איזון יומי: אדם לא יעשה יותר מ-3 מטלות ביום, לכל היותר אחת קשה ושתיים בינוניות
+  var LVLW = { light: 1, mid: 2, hard: 3 };
+  var dayCache = {};
+  function balanceDay(date) {
+    var occ = occOn(date), A = {}, byKey = {};
+    occ.forEach(function (o) { var k = o.t.id + '_' + o.slot; A[k] = baseAssignee(o.t, date, o.slot); byKey[k] = o; });
+    function lv(k) { return byKey[k].t.level || 'mid'; }
+    function load(p, skip) {
+      var r = { n: 0, hard: 0, mid: 0, w: 0 };
+      Object.keys(A).forEach(function (k) { if (k !== skip && A[k] === p) { r.n++; r.w += LVLW[lv(k)]; if (lv(k) === 'hard') r.hard++; if (lv(k) === 'mid') r.mid++; } });
+      return r;
+    }
+    function bad(r) { return r.n > 3 || r.hard > 1 || r.mid > 2; }
+    function conflict(k, p) {
+      var t = byKey[k].t;
+      var cook = A.cook_1, bring = A.bring_1, dishes = A.dishes_1;
+      if (t.id === 'cook' && (p === 'חן' || p === 'ענבר') && bring === p) return true;
+      if (t.id === 'bring' && (cook === 'חן' || cook === 'ענבר') && p === cook) return true;
+      if (t.id === 'bring' && dishes === p) return true;
+      if (t.id === 'dishes' && bring === p) return true;
+      return false;
+    }
+    function tryMove(k) {
+      var t = byKey[k].t, cur = A[k], n = t.who.length, i0 = t.who.indexOf(cur), best = null, bw = 1e9;
+      for (var j = 1; j < n; j++) {
+        var p = t.who[(i0 + j) % n];
+        if (conflict(k, p)) continue;
+        var r = load(p); r.n++; r.w += LVLW[lv(k)]; if (lv(k) === 'hard') r.hard++; if (lv(k) === 'mid') r.mid++;
+        if (bad(r)) continue;
+        if (r.w < bw) { bw = r.w; best = p; }
+      }
+      if (best) { A[k] = best; return true; }
+      return false;
+    }
+    for (var guard = 0; guard < 30; guard++) {
+      var moved = false;
+      for (var pi = 0; pi < NAMES.length && !moved; pi++) {
+        var P = NAMES[pi], r = load(P);
+        if (!bad(r)) continue;
+        var ks = Object.keys(A).filter(function (k) { return A[k] === P; });
+        var cls = r.hard > 1 ? 'hard' : r.mid > 2 ? 'mid' : null;
+        var cand = ks.filter(function (k) { return cls ? lv(k) === cls : true; });
+        cand.sort(function (a, b) { return LVLW[lv(b)] - LVLW[lv(a)] || (a < b ? 1 : -1); });
+        for (var ci = 0; ci < cand.length && !moved; ci++) moved = tryMove(cand[ci]);
+      }
+      if (!moved) break;
+    }
+    return A;
+  }
+  function assignee(t, date, slot) {
+    var k = key(date), c = dayCache[k] || (dayCache[k] = balanceDay(date));
+    return c[t.id + '_' + slot] || baseAssignee(t, date, slot);
   }
   function dayStats(k, occ) {
     var done = 0, off = 0;
@@ -488,6 +543,31 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     ov.querySelector('h2').textContent = msg;
     ov.addEventListener('click', function (ev) { if (ev.target === ov || ev.target.tagName === 'BUTTON') { ov.remove(); if (after) after(); } });
     document.body.appendChild(ov);
+  }
+  function ask(msg, buttons) {
+    if (document.querySelector('.notice-ov')) return;
+    var ov = document.createElement('div');
+    ov.className = 'notice-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML = '<div class="notice-box"><h2></h2><div class="ask-btns"></div></div>';
+    ov.querySelector('h2').textContent = msg;
+    var box = ov.querySelector('.ask-btns');
+    buttons.forEach(function (b) {
+      var el = document.createElement('button'); el.type = 'button'; el.textContent = b.label;
+      if (b.alt) el.className = 'alt';
+      el.addEventListener('click', function () { ov.remove(); if (b.fn) b.fn(); });
+      box.appendChild(el);
+    });
+    document.body.appendChild(ov);
+  }
+  var futureOk = {};
+  try { futureOk = JSON.parse(sessionStorage.getItem('chores.future') || '{}'); } catch (e) {}
+  function guardFuture(offset, day, apply) {
+    var d = dayDate(offset, day), k = key(d);
+    if (k <= key(today) || futureOk[k]) { apply(); return; }
+    ask('אתה בטוח שאתה מעוניין לסמן מטלה עתידית?', [
+      { label: 'רק בודק משהו, מבטיח', fn: function () { futureOk[k] = 1; try { sessionStorage.setItem('chores.future', JSON.stringify(futureOk)); } catch (e) {} apply(); } },
+      { label: 'עזוב, מעדיף להישאר כאן', alt: true }
+    ]);
   }
   var toastT;
   function toast(msg) {
@@ -695,8 +775,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('button');
     if (!t) return;
-    if (t.id === 'prevWeek') { st.offset = Math.max(MIN_OFF, st.offset - 1); st.open = null; render(); return; }
-    if (t.id === 'nextWeek') { st.offset = Math.min(MAX_OFF, st.offset + 1); st.open = null; render(); return; }
+    if (t.id === 'prevWeek') { var po = Math.max(MIN_OFF, st.offset - 1); guardFuture(po, st.day, function () { st.offset = po; st.open = null; render(); }); return; }
+    if (t.id === 'nextWeek') { var no = Math.min(MAX_OFF, st.offset + 1); guardFuture(no, st.day, function () { st.offset = no; st.open = null; render(); }); return; }
     if (t.id === 'goToday') { st.hlToday = true; st.offset = 0; st.day = today.getDay(); st.tab = 'day'; st.monthOff = 0; st.open = null; render(); return; }
     if (t.id === 'tabDay') { st.tab = 'day'; render(); return; }
     if (t.id === 'prevMonth') { st.monthOff = Math.max(-1, st.monthOff - 1); render(); return; }
@@ -704,7 +784,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (t.dataset.goto) {
       var gd = dateFromKey(t.dataset.goto), ws = new Date(gd); ws.setDate(ws.getDate() - ws.getDay());
       var diff = Math.round((ws.getTime() - weekStart(0).getTime()) / (7 * 86400000));
-      st.offset = diff; st.day = gd.getDay(); st.tab = 'day'; st.open = null; render(); return;
+      guardFuture(diff, gd.getDay(), function () { st.offset = diff; st.day = gd.getDay(); st.tab = 'day'; st.open = null; render(); }); return;
     }
     if ((t.dataset.undo || t.dataset.open || t.dataset.do === 'done' || t.dataset.do === 'missed' || t.dataset.do === 'cancel' || t.dataset.settle) && !st.me) {
       popup('בחר שם משתמש', function () { var ms = document.getElementById('me'); if (ms) { try { ms.scrollIntoView({ block: 'center' }); } catch (e) {} ms.focus(); } });
@@ -738,7 +818,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 
   document.addEventListener('click', function (ev) {
     var b = ev.target.closest('.day');
-    if (b && b.dataset.day != null) { st.day = +b.dataset.day; render(); }
+    if (b && b.dataset.day != null) { var nd = +b.dataset.day; guardFuture(st.offset, nd, function () { st.day = nd; render(); }); }
   });
 
   document.getElementById('tabMonth').addEventListener('click', function () { st.tab = 'month'; st.open = null; render(); });
