@@ -842,7 +842,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   // ---------- init firebase ----------
   try {
     var firebaseConfig = {
-      apiKey: "AIzaSyCo8dcTMutK0v1dcuEPSkvAZA8NYPySy_U",
+      apiKey: "AIzaSyCo8dCtMutK0v1dcuEPSkvAZA8NYPySy_U",
       authDomain: "home-tasks-keynan.firebaseapp.com",
       projectId: "home-tasks-keynan",
       storageBucket: "home-tasks-keynan.firebasestorage.app",
@@ -892,7 +892,6 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
             provider.setCustomParameters({ prompt: 'select_account' });
             auth.signInWithPopup(provider).catch(function (e) {
               if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) { auth.signInWithRedirect(provider); return; }
-              if (e && (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request')) return;
               console.error(e); var el = document.getElementById('gateErr'); if (el) el.innerHTML = 'הכניסה נכשלה, נסו שוב.<br><span dir="ltr" style="font-size:.75rem">' + esc((e && (e.code || e.message)) || '') + '</span>';
             });
           }
