@@ -227,6 +227,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 
 .notice-ov { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(8, 24, 21, .55); }
 .notice-ov[hidden] { display: none; }
+.cloud { position: relative; width: min(360px, 92vw); aspect-ratio: 300 / 210; }
+.cloud-bg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .35)); }
+.cloud-bg .c { fill: var(--surface); stroke: var(--accent); stroke-width: 3; stroke-linejoin: round; }
+.cloud-t { position: absolute; inset: 29% 16% 34% 18%; margin: 0; display: grid; place-items: center; text-align: center; font-weight: 600; font-size: 1.02rem; line-height: 1.4; color: var(--ink); text-wrap: balance; }
+.cloud-x { position: absolute; top: 20%; left: 11%; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); color: var(--ink); display: grid; place-items: center; }
 .notice-box { width: min(360px, 100%); background: var(--surface); color: var(--ink); border: 2px solid var(--accent); border-radius: 20px; padding: 26px 22px 20px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
 .notice-box h2 { margin: 0 0 18px; font-size: 1.3rem; line-height: 1.5; }
 .notice-box button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 12px 34px; font: inherit; font-weight: 700; cursor: pointer; }
@@ -586,6 +591,20 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     ov.addEventListener('click', function (ev) { if (ev.target === ov || ev.target.tagName === 'BUTTON') { ov.remove(); if (after) after(); } });
     document.body.appendChild(ov);
   }
+  function bubble(msg) {
+    if (document.querySelector('.notice-ov')) return;
+    var ov = document.createElement('div');
+    ov.className = 'notice-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML = '<div class="cloud"><svg class="cloud-bg" viewBox="0 0 300 210" aria-hidden="true"><path class="c" d="M70 150C35 150 22 115 48 98C34 68 68 42 98 56C108 22 165 14 185 46C215 28 262 52 247 88C285 100 275 150 235 150Z"/><circle class="c" cx="95" cy="173" r="9"/><circle class="c" cx="76" cy="193" r="5.5"/></svg>' +
+      '<p class="cloud-t"></p><button type="button" class="cloud-x" aria-label="סגירה"><svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg></button></div>';
+    ov.querySelector('.cloud-t').textContent = msg;
+    function close() { document.removeEventListener('keydown', onKey); ov.remove(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    ov.addEventListener('click', function (ev) { if (ev.target === ov || ev.target.closest('.cloud-x')) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(ov);
+    ov.querySelector('.cloud-x').focus();
+  }
   function ask(msg, buttons) {
     if (document.querySelector('.notice-ov')) return;
     var ov = document.createElement('div');
@@ -809,7 +828,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       '<li>מי שלא יכול לבצע את המטלה שלו מוצא מחליף ומחזיר לו אחר כך.</li>' +
       '<li>אם לא נמצא מחליף והמטלה לא בוצעה, התורן מפקיד 5 ' + NIS + ' בקופה בביט.</li>' +
       '<li>כשיצטבר סכום נאה, מחליטים יחד על פעילות משפחתית חוויתית.</li>' +
-      '<li class="rule-burgundy">מי שתורן בישולים לשבת אחראי לומר לתורן קניות עד יום שני בצהריים איזה מצרכים יש לקנות לבישולים לשבת (לסעודה ראשונה ושלישית בעיקר).</li></ol></div>';
+      '<li class="rule-burgundy">מי שתורן בישולים לשבת אחראי לומר לתורן קניות עד יום שני בצהריים איזה מצרכים יש לקנות לבישולים לשבת (לסעודה ראשונה ושלישית בעיקר). טיפ!!! לחץ על סמל המוח ביום שני תחת מטלת “קניות לבית”.</li></ol></div>';
     return h;
   }
 
@@ -817,6 +836,16 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('button');
     if (!t) return;
+    // לחיצה על סמל המוח במשימת קניות ביום שני: שאל את המבשל באותו שבוע מה הוא צריך
+    if (ev.target.closest('.brain') && t.dataset.open) {
+      var pr = t.dataset.open.split('_');
+      if (pr[1] === 'shop' && dateFromKey(pr[0]).getDay() === 1) {
+        var fd = dateFromKey(pr[0]); fd.setDate(fd.getDate() + 4);
+        var ck = assignee(COOK, fd, 1), fem = ck !== 'חן' && ck !== 'יעקב';
+        bubble('שאל את ' + ck + ' איזה מצרכים ' + (fem ? 'את צריכה' : 'אתה צריך') + ' כדי להכין את סעודות השבת?');
+        return;
+      }
+    }
     if (t.id === 'prevWeek') { var po = Math.max(MIN_OFF, st.offset - 1); st.offset = po; st.open = null; render(); return; }
     if (t.id === 'nextWeek') { var no = Math.min(MAX_OFF, st.offset + 1); st.offset = no; st.open = null; render(); return; }
     if (t.id === 'goToday') { futureOk = false; st.hlToday = true; st.offset = 0; st.day = today.getDay(); st.tab = 'day'; st.monthOff = 0; st.open = null; render(); return; }
