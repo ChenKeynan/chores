@@ -559,13 +559,13 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     });
     document.body.appendChild(ov);
   }
-  var futureOk = {};
-  try { futureOk = JSON.parse(sessionStorage.getItem('chores.future') || '{}'); } catch (e) {}
+  var futureOk = false;
   function guardFuture(offset, day, apply) {
     var d = dayDate(offset, day), k = key(d);
-    if (k <= key(today) || futureOk[k]) { apply(); return; }
+    if (k <= key(today)) { futureOk = false; apply(); return; }
+    if (futureOk) { apply(); return; }
     ask('אתה בטוח שאתה מעוניין לסמן מטלה עתידית?', [
-      { label: 'רק בודק משהו, מבטיח', fn: function () { futureOk[k] = 1; try { sessionStorage.setItem('chores.future', JSON.stringify(futureOk)); } catch (e) {} apply(); } },
+      { label: 'רק בודק משהו, מבטיח', fn: function () { futureOk = true; apply(); } },
       { label: 'עזוב, מעדיף להישאר כאן', alt: true }
     ]);
   }
@@ -631,7 +631,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       var dd = dayDate(st.offset, i), k = key(dd), occ = occOn(dd), ds = dayStats(k, occ), done = ds.done;
       var pct = ds.total ? Math.round(done * 100 / ds.total) : 0;
       var isToday = k === key(today);
-      h += '<button class="day' + (isToday ? ' today' : '') + (isToday && st.hlToday ? ' hl' : '') + '" data-day="' + i + '" aria-pressed="' + (i === st.day) + '" aria-label="יום ' + DAYS[i] + ', ' + done + ' מתוך ' + ds.total + '">' +
+      h += '<button class="day' + (isToday ? ' today' : '') + (isToday && (st.hlToday || i === st.day) ? ' hl' : '') + '" data-day="' + i + '" aria-pressed="' + (i === st.day) + '" aria-label="יום ' + DAYS[i] + ', ' + done + ' מתוך ' + ds.total + '">' +
         '<span class="dt">' + pad(dd.getDate()) + '/' + pad(dd.getMonth() + 1) + '</span><span class="d">' + DAYS[i] + '</span><span class="bar"><i style="width:' + pct + '%"></i></span><span class="n">' + done + '/' + ds.total + '</span></button>';
     }
     h += '</div>';
@@ -775,9 +775,9 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   document.addEventListener('click', function (ev) {
     var t = ev.target.closest('button');
     if (!t) return;
-    if (t.id === 'prevWeek') { var po = Math.max(MIN_OFF, st.offset - 1); guardFuture(po, st.day, function () { st.offset = po; st.open = null; render(); }); return; }
-    if (t.id === 'nextWeek') { var no = Math.min(MAX_OFF, st.offset + 1); guardFuture(no, st.day, function () { st.offset = no; st.open = null; render(); }); return; }
-    if (t.id === 'goToday') { st.hlToday = true; st.offset = 0; st.day = today.getDay(); st.tab = 'day'; st.monthOff = 0; st.open = null; render(); return; }
+    if (t.id === 'prevWeek') { var po = Math.max(MIN_OFF, st.offset - 1); st.offset = po; st.open = null; render(); return; }
+    if (t.id === 'nextWeek') { var no = Math.min(MAX_OFF, st.offset + 1); st.offset = no; st.open = null; render(); return; }
+    if (t.id === 'goToday') { futureOk = false; st.hlToday = true; st.offset = 0; st.day = today.getDay(); st.tab = 'day'; st.monthOff = 0; st.open = null; render(); return; }
     if (t.id === 'tabDay') { st.tab = 'day'; render(); return; }
     if (t.id === 'prevMonth') { st.monthOff = Math.max(-1, st.monthOff - 1); render(); return; }
     if (t.id === 'nextMonth') { st.monthOff = Math.min(2, st.monthOff + 1); render(); return; }
