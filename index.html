@@ -836,8 +836,10 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       var old = document.querySelector('.bubble'); if (old) { old.remove(); return; }
       var fri = dayDate(st.offset, st.day); fri.setDate(fri.getDate() + (5 - fri.getDay()));
       var cook = assignee(COOK, fri, 1);
+      var vd = dayDate(st.offset, st.day), shopper = '';
+      TASKS.forEach(function (t) { if (t.id === 'shop' && occOn(vd).some(function (o) { return o.t === t; })) shopper = assignee(t, vd, 1); });
       var bub = document.createElement('div'); bub.className = 'bubble'; bub.setAttribute('role', 'status');
-      bub.innerHTML = 'שאל את <b></b> אילו מצרכים ' + g(cook, 'הוא צריך', 'היא צריכה') + ' כדי להכין את סעודות השבת?';
+      bub.innerHTML = g(shopper || st.me, 'שאל', 'שאלי') + ' את <b></b> אילו מצרכים ' + g(cook, 'הוא צריך', 'היא צריכה') + ' כדי להכין את סעודות השבת?';
       bub.querySelector('b').textContent = cook;
       document.body.appendChild(bub);
       var r = br.getBoundingClientRect(), w = Math.min(280, window.innerWidth - 24), left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
