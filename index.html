@@ -227,11 +227,6 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 
 .notice-ov { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(8, 24, 21, .55); }
 .notice-ov[hidden] { display: none; }
-.cloud { position: relative; width: min(360px, 92vw); aspect-ratio: 300 / 210; }
-.cloud-bg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .35)); }
-.cloud-bg .c { fill: var(--surface); stroke: var(--accent); stroke-width: 3; stroke-linejoin: round; }
-.cloud-t { position: absolute; inset: 29% 16% 34% 18%; margin: 0; display: grid; place-items: center; text-align: center; font-weight: 600; font-size: 1.02rem; line-height: 1.4; color: var(--ink); text-wrap: balance; }
-.cloud-x { position: absolute; top: 20%; left: 11%; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); color: var(--ink); display: grid; place-items: center; }
 .notice-box { width: min(360px, 100%); background: var(--surface); color: var(--ink); border: 2px solid var(--accent); border-radius: 20px; padding: 26px 22px 20px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
 .notice-box h2 { margin: 0 0 18px; font-size: 1.3rem; line-height: 1.5; }
 .notice-box button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 12px; padding: 12px 34px; font: inherit; font-weight: 700; cursor: pointer; }
@@ -264,6 +259,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .sync.saving .sync-ic { animation: sync-spin 1s linear infinite; }
 @keyframes sync-spin { to { transform: rotate(-360deg); } }
 @media (prefers-reduced-motion: reduce) { .sync.saving .sync-ic { animation: none; } }
+.notice-box h2.sm { font-size: 1.02rem; font-weight: 500; line-height: 1.6; }
+.brain { cursor: pointer; }
+.bubble { position: absolute; z-index: 900; background: var(--accent); color: var(--accent-ink); border-radius: 14px; padding: 12px 14px; font-size: .95rem; line-height: 1.5; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.bubble::before { content: ''; position: absolute; top: -8px; left: var(--ax); margin-left: -8px; border: 8px solid transparent; border-top: 0; border-bottom-color: var(--accent); }
+.bubble b { font-weight: 800; text-decoration: underline; }
 </style>
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -361,7 +361,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'hang2', name: 'תליית מכונה עדן/יעקב/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'fold1', name: 'קיפול בגדים חן/אור', who: ['חן', 'אור'], slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'fold2', name: 'קיפול בגדים עדן/יעקב/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
-    { id: 'floor', name: 'שטיפת מרחב ציבורי (לא שואב שוטף)', who: ALL, slots: 1, days: [4] },
+    { id: 'floor', name: 'שטיפת מרחב ציבורי (לא שואב שוטף)', who: ALL, slots: 1, days: [5] },
     { id: 'room1', name: 'שטיפת פרקטים חדר הורים + חדר אור', who: G1, slots: 1, days: [2] },
     { id: 'room2', name: "שטיפת פרקטים חדר עדן/יעקב + ממ\"ד", who: G2, slots: 1, days: [3] },
     // בישולים לשבת: ביום ו'. סבתא בתיה: הבאה ביום ו' אחת לשבועיים, החזרה במוצאי שבת (יום ש'). phase קובע באיזה שבוע מתחיל המחזור.
@@ -382,8 +382,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   var COOK = TASKS.filter(function (t) { return t.id === 'cook'; })[0];
   var LEVELS = {
     light: ['sibus', 'trash', 'wash1', 'wash2', 'binBath', 'binParents', 'urn'],
-    mid: ['shabbatAm', 'unload', 'hang1', 'hang2', 'fold1', 'fold2', 'sheets', 'stove', 'table'],
-    hard: ['dishes', 'room1', 'room2', 'floor', 'cook', 'bring', 'back', 'cleanBath', 'cleanParents', 'shop']
+    mid: ['shabbatAm', 'unload', 'hang1', 'hang2', 'fold1', 'fold2', 'sheets', 'table'],
+    hard: ['dishes', 'room1', 'room2', 'floor', 'stove', 'cook', 'bring', 'back', 'cleanBath', 'cleanParents', 'shop']
   };
   // זמן משוער בדקות לכל ביצוע (1 עד 60). אפשר לשנות כאן.
   var MINUTES = {
@@ -502,20 +502,23 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       if (t.id === 'bring' && (cook === 'חן' || cook === 'ענבר') && p === cook) return true;
       if (t.id === 'bring' && dishes === p) return true;
       if (t.id === 'dishes' && bring === p) return true;
+      if (t.id === 'sibus' && A.shop_1 === p) return true;
+      if (t.id === 'shop' && A.sibus_1 === p) return true;
       return false;
     }
-    function tryMove(k) {
+    function tryMove(k, relax) {
       var t = byKey[k].t, cur = A[k], n = t.who.length, i0 = t.who.indexOf(cur), best = null, bw = 1e9;
       for (var j = 1; j < n; j++) {
         var p = t.who[(i0 + j) % n];
         if (conflict(k, p)) continue;
         var r = load(p); r.n++; r.w += LVLW[lv(k)]; if (lv(k) === 'hard') r.hard++; if (lv(k) === 'mid') r.mid++;
-        if (bad(r)) continue;
+        if (bad(r) && !relax) continue;
         if (r.w < bw) { bw = r.w; best = p; }
       }
       if (best) { A[k] = best; return true; }
       return false;
     }
+    if (A.shop_1 && A.sibus_1 && A.shop_1 === A.sibus_1) { if (!tryMove('sibus_1') && !tryMove('shop_1')) tryMove('sibus_1', true); }
     for (var guard = 0; guard < 30; guard++) {
       var moved = false;
       for (var pi = 0; pi < NAMES.length && !moved; pi++) {
@@ -582,28 +585,15 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   function writeFail(e) {
     toast(e && e.code === 'permission-denied' ? 'אין לך הרשאת עריכה. בדקו את חוקי האבטחה ב-Firebase.' : 'השמירה נכשלה. נסו שוב.');
   }
-  function popup(msg, after) {
+  function popup(msg, after, small) {
     if (document.querySelector('.notice-ov')) return;
     var ov = document.createElement('div');
     ov.className = 'notice-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="notice-box"><h2></h2><button type="button">הבנתי</button></div>';
     ov.querySelector('h2').textContent = msg;
+    if (small) ov.querySelector('h2').className = 'sm';
     ov.addEventListener('click', function (ev) { if (ev.target === ov || ev.target.tagName === 'BUTTON') { ov.remove(); if (after) after(); } });
     document.body.appendChild(ov);
-  }
-  function bubble(msg) {
-    if (document.querySelector('.notice-ov')) return;
-    var ov = document.createElement('div');
-    ov.className = 'notice-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
-    ov.innerHTML = '<div class="cloud"><svg class="cloud-bg" viewBox="0 0 300 210" aria-hidden="true"><path class="c" d="M70 150C35 150 22 115 48 98C34 68 68 42 98 56C108 22 165 14 185 46C215 28 262 52 247 88C285 100 275 150 235 150Z"/><circle class="c" cx="95" cy="173" r="9"/><circle class="c" cx="76" cy="193" r="5.5"/></svg>' +
-      '<p class="cloud-t"></p><button type="button" class="cloud-x" aria-label="סגירה"><svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg></button></div>';
-    ov.querySelector('.cloud-t').textContent = msg;
-    function close() { document.removeEventListener('keydown', onKey); ov.remove(); }
-    function onKey(e) { if (e.key === 'Escape') close(); }
-    ov.addEventListener('click', function (ev) { if (ev.target === ov || ev.target.closest('.cloud-x')) close(); });
-    document.addEventListener('keydown', onKey);
-    document.body.appendChild(ov);
-    ov.querySelector('.cloud-x').focus();
   }
   function ask(msg, buttons) {
     if (document.querySelector('.notice-ov')) return;
@@ -828,24 +818,30 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       '<li>מי שלא יכול לבצע את המטלה שלו מוצא מחליף ומחזיר לו אחר כך.</li>' +
       '<li>אם לא נמצא מחליף והמטלה לא בוצעה, התורן מפקיד 5 ' + NIS + ' בקופה בביט.</li>' +
       '<li>כשיצטבר סכום נאה, מחליטים יחד על פעילות משפחתית חוויתית.</li>' +
-      '<li class="rule-burgundy">מי שתורן בישולים לשבת אחראי לומר לתורן קניות עד יום שני בצהריים איזה מצרכים יש לקנות לבישולים לשבת (לסעודה ראשונה ושלישית בעיקר). טיפ!!! לחץ על סמל המוח ביום שני תחת מטלת “קניות לבית”.</li></ol></div>';
+      '<li class="rule-burgundy">מי שתורן בישולים לשבת אחראי לומר לתורן קניות עד יום שני בצהריים איזה מצרכים יש לקנות לבישולים לשבת (לסעודה ראשונה ושלישית בעיקר).</li></ol></div>';
     return h;
   }
 
   // ---------- events ----------
   document.addEventListener('click', function (ev) {
+    var br = ev.target.closest('.brain');
+    if (br) {
+      ev.stopPropagation();
+      var old = document.querySelector('.bubble'); if (old) { old.remove(); return; }
+      var fri = dayDate(st.offset, st.day); fri.setDate(fri.getDate() + (5 - fri.getDay()));
+      var cook = assignee(COOK, fri, 1);
+      var bub = document.createElement('div'); bub.className = 'bubble'; bub.setAttribute('role', 'status');
+      bub.innerHTML = 'שאל את <b></b> איזה מצרכים את/ה צריכ/ה כדי להכין את סעודות השבת?';
+      bub.querySelector('b').textContent = cook;
+      document.body.appendChild(bub);
+      var r = br.getBoundingClientRect(), w = Math.min(280, window.innerWidth - 24), left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
+      bub.style.width = w + 'px'; bub.style.left = left + 'px'; bub.style.top = (r.bottom + window.scrollY + 12) + 'px';
+      bub.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - left)) + 'px');
+      return;
+    }
+    var openBub = document.querySelector('.bubble'); if (openBub) openBub.remove();
     var t = ev.target.closest('button');
     if (!t) return;
-    // לחיצה על סמל המוח במשימת קניות ביום שני: שאל את המבשל באותו שבוע מה הוא צריך
-    if (ev.target.closest('.brain') && t.dataset.open) {
-      var pr = t.dataset.open.split('_');
-      if (pr[1] === 'shop' && dateFromKey(pr[0]).getDay() === 1) {
-        var fd = dateFromKey(pr[0]); fd.setDate(fd.getDate() + 4);
-        var ck = assignee(COOK, fd, 1), fem = ck !== 'חן' && ck !== 'יעקב';
-        bubble('שאל את ' + ck + ' איזה מצרכים ' + (fem ? 'את צריכה' : 'אתה צריך') + ' כדי להכין את סעודות השבת?');
-        return;
-      }
-    }
     if (t.id === 'prevWeek') { var po = Math.max(MIN_OFF, st.offset - 1); st.offset = po; st.open = null; render(); return; }
     if (t.id === 'nextWeek') { var no = Math.min(MAX_OFF, st.offset + 1); st.offset = no; st.open = null; render(); return; }
     if (t.id === 'goToday') { futureOk = false; st.hlToday = true; st.offset = 0; st.day = today.getDay(); st.tab = 'day'; st.monthOff = 0; st.open = null; render(); return; }
