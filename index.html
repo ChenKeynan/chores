@@ -343,6 +343,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { n: 'חן', h: 195 }, { n: 'ענבר', h: 330 }, { n: 'אור', h: 38 },
     { n: 'יעקב', h: 145 }, { n: 'עדן', h: 262 }
   ];
+  var FEM = { 'ענבר': 1, 'עדן': 1, 'אור': 1 };
+  function g(name, m, f) { return FEM[name] ? f : m; }
   var NAMES = PEOPLE.map(function (p) { return p.n; });
   var DAYS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
   var ALL = NAMES.slice();
@@ -617,9 +619,9 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     var d = dayDate(offset, day), k = key(d);
     if (k <= key(today)) { futureOk = false; apply(); return; }
     if (futureOk) { apply(); return; }
-    ask('אתה בטוח שאתה מעוניין לסמן מטלה עתידית?', [
-      { label: 'רק בודק משהו, מבטיח', fn: function () { futureOk = true; apply(); } },
-      { label: 'עזוב, מעדיף להישאר כאן', alt: true }
+    ask(g(st.me, 'אתה בטוח שאתה מעוניין', 'את בטוחה שאת מעוניינת') + ' לסמן מטלה עתידית?', [
+      { label: g(st.me, 'רק בודק משהו, מבטיח', 'רק בודקת משהו, מבטיחה'), fn: function () { futureOk = true; apply(); } },
+      { label: g(st.me, 'עזוב, מעדיף', 'עזבי, מעדיפה') + ' להישאר כאן', alt: true }
     ]);
   }
   var toastT;
@@ -639,12 +641,12 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     var data = { date: dateKey, task: o.t.id, slot: o.slot, status: 'done', by: d.by, ts: Date.now(), flag: false };
     if (d.by !== who) { data.instead = who; data.repaid = false; data.flag = true; }
     st.open = null; st.draft = {};
-    save(id, data).then(function () { toast(data.instead ? 'נרשם. ' + data.instead + ' חייב/ת ל' + data.by + ' החלפה' : 'נרשם. כל הכבוד ' + data.by); }, function () {});
+    save(id, data).then(function () { toast(data.instead ? 'נרשם. ' + data.instead + ' ' + g(data.instead, 'חייב', 'חייבת') + ' ל' + data.by + ' החלפה' : 'נרשם. כל הכבוד ' + data.by); }, function () {});
   }
   function markMissed(id, o, dateKey) {
     var data = { date: dateKey, task: o.t.id, slot: o.slot, status: 'missed', payer: assignee(o.t, dateFromKey(dateKey), o.slot), ts: Date.now(), flag: true };
     st.open = null; st.draft = {};
-    save(id, data).then(function () { toast('5 ₪ נוספו לקופה, ' + data.payer + ' מפקיד/ה בביט'); }, function () {});
+    save(id, data).then(function () { toast('5 ₪ נוספו לקופה, ' + data.payer + ' ' + g(data.payer, 'מפקיד', 'מפקידה') + ' בביט'); }, function () {});
   }
   function markCancel(id, o, dateKey) {
     var reason = (st.draft.reason || '').trim();
@@ -710,7 +712,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     } else if (r && r.status === 'cancelled') {
       icon = '–'; meta = 'בוטלה ללא קנס. סיבה: ' + esc(r.reason) + (r.by ? ' (' + esc(r.by) + ')' : '');
     } else if (r) {
-      icon = NIS; meta = 'לא בוצע. ' + esc(r.payer) + ' מפקיד/ה 5 ' + NIS + ' בקופה';
+      icon = NIS; meta = 'לא בוצע. ' + esc(r.payer) + ' ' + g(r.payer, 'מפקיד', 'מפקידה') + ' 5 ' + NIS + ' בקופה';
     } else {
       meta = 'התור של <span class="turn">' + badge(who) + esc(who) + '</span>';
     }
@@ -729,7 +731,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
         '<input class="reason" id="reason" type="text" maxlength="120" placeholder="למשל: אין כלים בכיור, כולם בחופשה" value="' + esc(d.reason || '') + '"></div>' +
         '<div class="actions"><button class="btn ghost" id="cancelBtn" data-do="cancel" ' + ((d.reason || '').trim().length >= 3 ? '' : 'disabled') + '>בטל מטלה</button></div>' +
         '<hr class="sep"><div><h3><span class="wb">לא בוצעה ואין מחליף?</span></h3></div>' +
-        '<div class="actions"><button class="btn alt" data-do="missed">' + esc(who) + ' מפקיד/ה 5 ' + NIS + ' לקופה</button><button class="btn ghost" data-do="close">סגור</button></div></div>';
+        '<div class="actions"><button class="btn alt" data-do="missed">' + esc(who) + ' ' + g(who, 'מפקיד', 'מפקידה') + ' 5 ' + NIS + ' לקופה</button><button class="btn ghost" data-do="close">סגור</button></div></div>';
     }
     return h + '</div>';
   }
@@ -810,7 +812,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (!dk.length) h += '<p class="empty">אין חובות פתוחים.</p>';
     dk.forEach(function (k) {
       var a = k.split('|');
-      h += '<div class="debt"><span>' + badge(a[0]) + ' <strong>' + esc(a[0]) + '</strong> חייב/ת ל<strong>' + esc(a[1]) + '</strong>: ' + debts[k] + ' החלפות</span>' +
+      h += '<div class="debt"><span>' + badge(a[0]) + ' <strong>' + esc(a[0]) + '</strong> ' + g(a[0], 'חייב', 'חייבת') + ' ל<strong>' + esc(a[1]) + '</strong>: ' + debts[k] + ' החלפות</span>' +
         '<button class="btn ghost" data-settle="' + esc(k) + '">סמן כהוחזר</button></div>';
     });
     h += '</div>';
@@ -835,7 +837,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       var fri = dayDate(st.offset, st.day); fri.setDate(fri.getDate() + (5 - fri.getDay()));
       var cook = assignee(COOK, fri, 1);
       var bub = document.createElement('div'); bub.className = 'bubble'; bub.setAttribute('role', 'status');
-      bub.innerHTML = 'שאל את <b></b> איזה מצרכים את/ה צריכ/ה כדי להכין את סעודות השבת?';
+      bub.innerHTML = 'שאל את <b></b> אילו מצרכים ' + g(cook, 'הוא צריך', 'היא צריכה') + ' כדי להכין את סעודות השבת?';
       bub.querySelector('b').textContent = cook;
       document.body.appendChild(bub);
       var r = br.getBoundingClientRect(), w = Math.min(280, window.innerWidth - 24), left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
