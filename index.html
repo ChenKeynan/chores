@@ -261,8 +261,9 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 @media (prefers-reduced-motion: reduce) { .sync.saving .sync-ic { animation: none; } }
 .notice-box h2.sm { font-size: 1.02rem; font-weight: 500; line-height: 1.6; }
 .brain { cursor: pointer; }
-.bubble { position: absolute; z-index: 900; background: var(--accent); color: var(--accent-ink); border-radius: 14px; padding: 12px 14px; font-size: .95rem; line-height: 1.5; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
-.bubble::before { content: ''; position: absolute; top: -8px; left: var(--ax); margin-left: -8px; border: 8px solid transparent; border-top: 0; border-bottom-color: var(--accent); }
+.bubble { position: absolute; z-index: 900; color: #1d4651; padding: 22px 22px; font-size: .95rem; line-height: 1.5; font-weight: 600; text-align: center; filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); }
+.bubble svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.bubble .bt { position: relative; }
 .bubble b { font-weight: 800; text-decoration: underline; }
 </style>
 </head><body>
@@ -839,12 +840,28 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       var vd = dayDate(st.offset, st.day), shopper = '';
       TASKS.forEach(function (t) { if (t.id === 'shop' && occOn(vd).some(function (o) { return o.t === t; })) shopper = assignee(t, vd, 1); });
       var bub = document.createElement('div'); bub.className = 'bubble'; bub.setAttribute('role', 'status');
-      bub.innerHTML = g(shopper || st.me, 'שאל', 'שאלי') + ' את <b></b> אילו מצרכים ' + g(cook, 'הוא צריך', 'היא צריכה') + ' כדי להכין את סעודות השבת?';
+      bub.innerHTML = '<span class="bt">' + (g(shopper || st.me, 'שאל', 'שאלי') + ' את <b></b> אילו מצרכים ' + g(cook, 'הוא צריך', 'היא צריכה') + ' כדי להכין את סעודות השבת?') + '</span>';
       bub.querySelector('b').textContent = cook;
       document.body.appendChild(bub);
-      var r = br.getBoundingClientRect(), w = Math.min(280, window.innerWidth - 24), left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
-      bub.style.width = w + 'px'; bub.style.left = left + 'px'; bub.style.top = (r.bottom + window.scrollY + 12) + 'px';
+      var r = br.getBoundingClientRect(), w = Math.min(300, window.innerWidth - 24), left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
+      bub.style.width = w + 'px'; bub.style.left = left + 'px'; bub.style.top = (r.bottom + window.scrollY + 44) + 'px';
       bub.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - left)) + 'px');
+      (function () {
+        var W = bub.offsetWidth, H = bub.offsetHeight, ax = parseFloat(bub.style.getPropertyValue('--ax')), NS = 'http://www.w3.org/2000/svg';
+        var sv = document.createElementNS(NS, 'svg'); sv.setAttribute('width', W); sv.setAttribute('height', H); sv.setAttribute('aria-hidden', 'true');
+        var ins = 20, shapes = '<rect x="' + ins + '" y="' + ins + '" width="' + (W - 2 * ins) + '" height="' + (H - 2 * ins) + '" rx="16"/>';
+        function lobes(len, n, fx) { var sp = len / n, r = sp * 0.62; for (var q = 0; q < n; q++) fx(ins + sp * (q + 0.5), r); }
+        lobes(W - 2 * ins, 3, function (x, r) { shapes += '<circle cx="' + x + '" cy="' + (ins + 3) + '" r="' + r + '"/><circle cx="' + x + '" cy="' + (H - ins - 3) + '" r="' + r + '"/>'; });
+        lobes(H - 2 * ins, 3, function (y, r) { shapes += '<circle cx="' + (ins + 3) + '" cy="' + y + '" r="' + r + '"/><circle cx="' + (W - ins - 3) + '" cy="' + y + '" r="' + r + '"/>'; });
+        var by = H - 16;
+        shapes += '<path d="M' + (ax - 26) + ' ' + by + ' Q' + (ax - 14) + ' ' + (H + 22) + ' ' + (ax + 8) + ' ' + (H + 42) + ' Q' + (ax - 2) + ' ' + (H + 14) + ' ' + (ax + 26) + ' ' + by + ' Z"/>';
+        sv.innerHTML = '<defs><radialGradient id="cloudG" gradientUnits="userSpaceOnUse" cx="' + (W / 2) + '" cy="' + (H / 2) + '" r="' + (W * 0.62) + '"><stop offset="0" stop-color="#eef8fa"/><stop offset=".55" stop-color="#d3ecf1"/><stop offset="1" stop-color="#9fd0dc"/></radialGradient></defs>' +
+          '<g fill="#efe3a8" stroke="#e3d38a" stroke-width="8" stroke-linejoin="round">' + shapes + '</g>' +
+          '<g fill="url(#cloudG)">' + shapes + '</g>' +
+          '<g fill="none" stroke="#fff" stroke-width="1.4" opacity=".9"><ellipse cx="46" cy="16" rx="6" ry="3.5"/><ellipse cx="60" cy="13" rx="3.5" ry="2.2"/><ellipse cx="' + (W - 34) + '" cy="' + (H - 14) + '" rx="6" ry="3.5"/><ellipse cx="' + (W - 48) + '" cy="' + (H - 22) + '" rx="3.5" ry="2.2"/></g>';
+        bub.insertBefore(sv, bub.firstChild);
+        bub.style.top = Math.max(window.scrollY + 8, r.top + window.scrollY - H - 54) + 'px';
+      })();
       return;
     }
     var openBub = document.querySelector('.bubble'); if (openBub) openBub.remove();
