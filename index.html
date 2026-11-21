@@ -917,12 +917,18 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       TASKS.forEach(function (t) { if (t.id === 'shop' && occOn(vd).some(function (o) { return o.t === t; })) shopper = assignee(t, vd, 1); });
       if (cook === (shopper || st.me)) return; // התורן קונה ומבשל בעצמו - אין למי לשאול
       var bub = document.createElement('div'); bub.className = 'bubble'; bub.setAttribute('role', 'status');
-      bub.innerHTML = '<span class="bt">' + (g(shopper || st.me, 'שאל', 'שאלי') + ' את <b></b> אילו מצרכים ' + g(cook, 'הוא צריך', 'היא צריכה') + ' כדי להכין את סעודות השבת?') + '</span>';
-      bub.querySelector('b').textContent = cook;
+      function bubTxt(a, c) { return g(a, 'שאל', 'שאלי') + ' את <b>' + esc(c) + '</b> אילו מצרכים ' + g(c, 'הוא צריך', 'היא צריכה') + ' כדי להכין את סעודות השבת?'; }
+      bub.innerHTML = '<span class="bt">' + bubTxt(shopper || st.me, cook) + '</span>';
       document.body.appendChild(bub);
       var r = br.getBoundingClientRect(), wt = Math.min(220, window.innerWidth - 100);
       bub.style.padding = '0'; bub.style.width = wt + 'px'; bub.style.left = '0px';
-      var ht = bub.querySelector('.bt').offsetHeight, px = Math.round(wt * 0.21), py = Math.round(ht * 0.45) + 8;
+      // צורת הענן קבועה: הגובה נקבע לפי הניסוח הארוך ביותר האפשרי (כל צירופי שואל/מבשל), והטקסט ממורכז בתוכו
+      var bt = bub.querySelector('.bt'), ht = 0;
+      NAMES.forEach(function (c) { NAMES.forEach(function (a) { bt.innerHTML = bubTxt(a, c); ht = Math.max(ht, bt.offsetHeight); }); });
+      bt.innerHTML = '<span>' + bubTxt(shopper || st.me, cook) + '</span>';
+      bt.style.cssText = 'display:flex;align-items:center;justify-content:center;height:' + ht + 'px';
+      var px = Math.round(wt * 0.21), py = Math.round(ht * 0.45) + 8;
+      py = Math.max(py, Math.round(((wt + 2 * px) * 0.48 - ht) / 2));
       bub.style.padding = py + 'px ' + px + 'px'; bub.style.boxSizing = 'content-box';
       var w = wt + 2 * px, left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
       bub.style.left = left + 'px'; bub.style.top = '0px';
