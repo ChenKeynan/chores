@@ -143,7 +143,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .debt .btn { min-height: 40px; padding: 6px 12px; }
 .dperson { padding: 10px 0; border-top: 1px solid var(--line); }
 .dperson:first-of-type { border-top: 0; }
-.dname { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; margin-bottom: 2px; }
+.dname { display: flex; align-items: center; gap: 8px; font-size: calc(1.05rem + 2pt); margin-bottom: 2px; }
+.dname strong { text-decoration: underline; text-underline-offset: 4px; }
+.dact { display: flex; align-items: center; gap: 6px; }
+.debt .undo { min-width: 40px; padding: 6px 10px; font-size: 1.1rem; }
+.dlvl .debt { flex: 1; }
 .dlvl { display: flex; align-items: flex-start; gap: 10px; padding: 3px 0; }
 .dlvl .lvl { flex: none; margin-top: 8px; }
 .dlist { flex: 1; display: flex; flex-direction: column; gap: 4px; }
@@ -278,10 +282,10 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 @media (prefers-reduced-motion: reduce) { .sync.saving .sync-ic { animation: none; } }
 .notice-box h2.sm { font-size: 1.02rem; font-weight: 500; line-height: 1.6; }
 .brain { cursor: pointer; }
-.bubble { position: absolute; z-index: 900; color: #000; padding: 40px 54px; font-size: .95rem; line-height: 1.5; font-weight: 600; text-align: center; filter: drop-shadow(4px 6px 3px rgba(0,0,0,.35)); }
+.bubble { position: absolute; z-index: 900; color: #fff; padding: 40px 54px; font-size: .95rem; line-height: 1.5; font-weight: 700; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,.45); filter: drop-shadow(8px 12px 9px rgba(0,0,0,.38)); }
 .bubble svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .bubble .bt { position: relative; }
-.bubble .bx { position: absolute; top: 5%; right: 22%; width: 26px; height: 26px; line-height: 26px; text-align: center; color: #000; font-size: 15px; font-weight: 800; cursor: pointer; z-index: 2; }
+.bubble .bx { position: absolute; top: 12%; right: 20%; width: 26px; height: 26px; line-height: 26px; text-align: center; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; z-index: 2; }
 .bubble b { font-weight: 800; text-decoration: underline; }
 
 #splash { position: fixed; inset: 0; z-index: 5000; background: var(--bg, #fff3ea); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: opacity .5s ease; }
@@ -407,7 +411,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'urn', name: 'מילוי וחיבור מיחם', who: ['חן', 'ענבר', 'יעקב', 'עדן', 'אור'], slots: 1, days: [5] },
     { id: 'shabbatAm', name: 'עריכת שולחן והכנת ארוחת שבת בבוקר', who: ['ענבר', 'עדן'], slots: 1, days: [6] },
     // שטיפת מרפסת: ראשון הראשון בכל חודש, מתחלקת בין כולם לפי הסדר (מתחיל בחן ב-6/12/2026). נוספה בסוף הרשימה כדי לא להזיז את הסבבים של שאר המטלות.
-    { id: 'balcony', name: 'שטיפת מרפסת (אחת לחודש)', who: ALL, slots: 1, days: [0], monthly: true, fixed: true, anchor: { date: '2026-12-06', who: 'חן' } }
+    { id: 'balcony', name: 'שטיפת מרפסת', who: ALL, slots: 1, days: [0], monthly: true, fixed: true, anchor: { date: '2026-12-06', who: 'חן' } }
   ];
   // סדר קבוע בכל המטלות: חן, ענבר, אור, יעקב, עדן
   TASKS.forEach(function (t) { var so = function (a, b) { return NAMES.indexOf(a) - NAMES.indexOf(b); }; t.who = t.who.slice().sort(so); if (t.whoOld) t.whoOld = t.whoOld.slice().sort(so); });
@@ -465,7 +469,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   function dayDate(off, idx) { var d = weekStart(off); d.setDate(d.getDate() + idx); return d; }
   var MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
   function short(d) { return d.getDate() + ' ב' + MONTHS[d.getMonth()]; }
-  var MIN_OFF = -8, MAX_OFF = 8;
+  var MIN_OFF = -100000, MAX_OFF = 100000;
   st.day = today.getDay();
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -698,7 +702,19 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       if (r.status === 'done' && r.instead === from && r.by === to && !r.repaid && taskLevel(r) === lvl && (!best || (r.ts || 0) < (best.ts || 0))) { best = r; bid = id; }
     });
     if (!bid) return;
-    patch(bid, { repaid: true, flag: false }).then(function () { toast('סומנה החלפה אחת כהוחזרה'); }, function () {});
+    st.lastSettle = from + '|' + to + '|' + lvl;
+    patch(bid, { repaid: true, repaidAt: Date.now(), flag: false }).then(function () { toast('סומנה החלפה אחת כהוחזרה'); }, function () {});
+  }
+  // ביטול סימון אחרון: מחזיר את ההחלפה שסומנה אחרונה (באותו חייב, זכאי וקטגוריה) להיות חוב פתוח
+  function unsettle(from, to, lvl) {
+    var all = Object.assign({}, st.extra, st.main), best = null, bid = null;
+    Object.keys(all).forEach(function (id) {
+      var r = all[id];
+      if (r.status === 'done' && r.instead === from && r.by === to && r.repaid && r.repaidAt && taskLevel(r) === lvl && (!best || r.repaidAt > best.repaidAt)) { best = r; bid = id; }
+    });
+    if (!bid) return;
+    st.lastSettle = null;
+    patch(bid, { repaid: false, repaidAt: 0, flag: true }).then(function () { toast('הסימון בוטל'); }, function () {});
   }
 
   // ---------- render ----------
@@ -791,8 +807,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     var first = new Date(yr, mo, 1, 12), last = new Date(yr, mo + 1, 0, 12);
     var start = new Date(first); start.setDate(start.getDate() - start.getDay());
     var planned = {}; NAMES.forEach(function (n) { planned[n] = 0; });
-    var h = '<div class="monthhead"><button class="icon-btn" id="nextMonth" aria-label="לחודש הבא"' + (st.monthOff >= 2 ? ' disabled' : '') + '>›</button>' +
-      '<h2>' + MONTHS[mo] + ' ' + yr + '</h2><button class="icon-btn" id="prevMonth" aria-label="לחודש הקודם"' + (st.monthOff <= -1 ? ' disabled' : '') + '>‹</button></div>';
+    var h = '<div class="monthhead"><button class="icon-btn" id="nextMonth" aria-label="לחודש הבא"' + '' + '>›</button>' +
+      '<h2>' + MONTHS[mo] + ' ' + yr + '</h2><button class="icon-btn" id="prevMonth" aria-label="לחודש הקודם"' + '' + '>‹</button></div>';
     h += '<div class="cal">' + DAYS.map(function (d) { return '<div class="hd">' + d + "'</div>"; }).join('');
     for (var d = new Date(start); d <= last; d.setDate(d.getDate() + 1)) {
       var dow = d.getDay();
@@ -861,14 +877,14 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     else NAMES.forEach(function (a) {
       h += '<div class="dperson" style="--h:' + PEOPLE[pIdx(a)].h + '"><div class="dname">' + badge(a) + ' <strong>' + esc(a) + '</strong></div>';
       ['light', 'mid', 'hard'].forEach(function (l) {
-        var rows = NAMES.filter(function (b) { return net[l][a + '|' + b]; });
-        h += '<div class="dlvl">' + lvlIcon(l) + '<div class="dlist">';
-        if (!rows.length) h += '<span class="dnone">—</span>';
+        var rows = NAMES.filter(function (b) { return net[l][a + '|' + b] || st.lastSettle === a + '|' + b + '|' + l; });
+        if (!rows.length) { h += '<div class="dlvl">' + lvlIcon(l) + '<div class="dlist"><span class="dnone">—</span></div></div>'; return; }
         rows.forEach(function (b) {
-          h += '<div class="debt"><span>' + g(a, 'חייב', 'חייבת') + ' ל<strong>' + esc(b) + '</strong>: ' + net[l][a + '|' + b] + ' ' + (net[l][a + '|' + b] === 1 ? 'החלפה' : 'החלפות') + '</span>' +
-            '<button class="btn ghost" data-settle="' + esc(a + '|' + b + '|' + l) + '">סמן כהוחזר</button></div>';
+          var k = a + '|' + b + '|' + l, n = net[l][k.replace(/\|[^|]*$/, '')] || 0, canUndo = Object.keys(all).some(function (id) { var r = all[id]; return r.status === 'done' && r.instead === a && r.by === b && r.repaid && r.repaidAt && taskLevel(r) === l; });
+          h += '<div class="dlvl">' + lvlIcon(l) + '<div class="debt"><span>' + (n ? g(a, 'חייב', 'חייבת') + ' ל<strong>' + esc(b) + '</strong>: ' + n + ' ' + (n === 1 ? 'החלפה' : 'החלפות') : 'כל ההחלפות ל<strong>' + esc(b) + '</strong> הוחזרו ✓') + '</span><span class="dact">' +
+            (canUndo ? '<button class="btn ghost undo" data-unsettle="' + esc(k) + '" aria-label="בטל סימון אחרון" title="בטל סימון אחרון">↶</button>' : '') +
+            (n ? '<button class="btn ghost" data-settle="' + esc(k) + '">סמן כהוחזר</button>' : '') + '</span></div></div>';
         });
-        h += '</div></div>';
       });
       h += '</div>';
     });
@@ -903,28 +919,28 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       var ht = bub.querySelector('.bt').offsetHeight, px = Math.round(wt * 0.21), py = Math.round(ht * 0.45) + 8;
       bub.style.padding = py + 'px ' + px + 'px'; bub.style.boxSizing = 'content-box';
       var w = wt + 2 * px, left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
-      bub.style.left = left + 'px'; bub.style.top = (r.bottom + window.scrollY + 44) + 'px';
+      bub.style.left = left + 'px'; bub.style.top = '0px';
       bub.style.setProperty('--ax', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - left)) + 'px');
       (function () {
         var W = bub.offsetWidth, H = bub.offsetHeight, ax = parseFloat(bub.style.getPropertyValue('--ax')), NS = 'http://www.w3.org/2000/svg';
-        var sv = document.createElementNS(NS, 'svg'); sv.setAttribute('width', W); sv.setAttribute('height', H); sv.setAttribute('aria-hidden', 'true');
+        var sv = document.createElementNS(NS, 'svg'); sv.setAttribute('width', W); sv.setAttribute('height', H + 60); sv.setAttribute('aria-hidden', 'true');
         var cx = W / 2, cy = H / 2, rx = W / 2 - 2, ry = H / 2 - 2;
-        function ey(x) { var t = 1 - Math.pow((x - cx) / rx, 2); return cy + ry * Math.sqrt(Math.max(t, 0)) - 2; }
-        var N = 10, Pm = 2 * Math.PI * Math.sqrt((rx * rx + ry * ry) / 2), rb = Pm / N * 0.62, rx0 = rx - rb * 1.0, ry0 = ry - rb * 1.0;
-        var F = [0.95, 1.1, 1.0, 0.9, 0.95, 1.1, 1.0, 0.9, 0.95, 1.05], C = [];
+        var N = 10, Pm = 2 * Math.PI * Math.sqrt((rx * rx + ry * ry) / 2), rb = Pm / N * 0.62, rx0 = rx - rb, ry0 = ry - rb;
+        var F = [0.95, 1.1, 1.0, 0.9, 0.95, 1.1, 1.0, 0.9, 0.95, 1.05], C = [], h = '';
         for (var q = 0; q < N; q++) { var an = (-180 + (q + 0.5) * 360 / N) * Math.PI / 180; C.push({ x: cx + rx0 * Math.cos(an), y: cy + ry0 * Math.sin(an), r: rb * F[q] }); }
-        function isect(A, B) { var dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy), a2 = (A.r * A.r - B.r * B.r + d * d) / (2 * d), h = Math.sqrt(Math.max(A.r * A.r - a2 * a2, 0)), ux = dx / d, uy = dy / d, mx = A.x + a2 * ux, my = A.y + a2 * uy, p1 = { x: mx - h * uy, y: my + h * ux }, p2 = { x: mx + h * uy, y: my - h * ux };
+        function isect(A, B) { var dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy), a2 = (A.r * A.r - B.r * B.r + d * d) / (2 * d), hh = Math.sqrt(Math.max(A.r * A.r - a2 * a2, 0)), ux = dx / d, uy = dy / d, mx = A.x + a2 * ux, my = A.y + a2 * uy, p1 = { x: mx - hh * uy, y: my + hh * ux }, p2 = { x: mx + hh * uy, y: my - hh * ux };
           return Math.hypot(p1.x - cx, p1.y - cy) > Math.hypot(p2.x - cx, p2.y - cy) ? p1 : p2; }
         var PT = C.map(function (c, i) { return isect(c, C[(i + 1) % N]); }), d0 = 'M' + PT[N - 1].x + ' ' + PT[N - 1].y;
         C.forEach(function (c, i) { var p0 = PT[(i + N - 1) % N], p1 = PT[i], a0 = Math.atan2(p0.y - c.y, p0.x - c.x), a1 = Math.atan2(p1.y - c.y, p1.x - c.x), sp = (a1 - a0 + 4 * Math.PI) % (2 * Math.PI);
           d0 += ' A' + c.r + ' ' + c.r + ' 0 ' + (sp > Math.PI ? 1 : 0) + ' 1 ' + p1.x + ' ' + p1.y; });
-        var big = '<path d="' + d0 + ' Z"/>';
-        var dots = '<circle cx="' + (ax + 14) + '" cy="' + (H + 22) + '" r="8"/><circle cx="' + (ax + 6) + '" cy="' + (H + 38) + '" r="5.5"/><circle cx="' + ax + '" cy="' + (H + 49) + '" r="3.5"/>';
-        var all = big + dots;
-        sv.innerHTML = '<g style="fill:#111;stroke:#111;stroke-width:6;stroke-linejoin:round">' + all + '</g><g style="fill:#39ff14">' + all + '</g>';
+        h += '<defs><radialGradient id="cg" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#6a6465"/><stop offset=".7" stop-color="#777172"/><stop offset=".9" stop-color="#928c8d"/><stop offset="1" stop-color="#b9b3b4"/></radialGradient>' +
+          '<radialGradient id="cd" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#6a6465"/><stop offset=".6" stop-color="#7a7475"/><stop offset="1" stop-color="#aaa4a5"/></radialGradient></defs>';
+        h += '<path d="' + d0 + ' Z" fill="url(#cg)"/>';
+        h += '<circle cx="' + (ax + 14) + '" cy="' + (H + 14) + '" r="9" fill="url(#cd)"/><circle cx="' + (ax + 6) + '" cy="' + (H + 31) + '" r="6" fill="url(#cd)"/><circle cx="' + ax + '" cy="' + (H + 43) + '" r="3.8" fill="url(#cd)"/>';
+        sv.innerHTML = h;
         bub.insertBefore(sv, bub.firstChild);
-        var x = document.createElement('span'); x.className = 'bx'; x.setAttribute('aria-label', 'סגור'); x.textContent = '\u2715'; bub.appendChild(x);
-        bub.style.top = Math.max(window.scrollY + 8, r.top + window.scrollY - H - 64) + 'px';
+        var x = document.createElement('span'); x.className = 'bx'; x.setAttribute('aria-label', 'סגור'); x.textContent = '✕'; bub.appendChild(x);
+        bub.style.top = Math.max(window.scrollY + 8, r.top + window.scrollY - H - 54) + 'px';
       })();
       return;
     }
@@ -935,19 +951,20 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (t.id === 'nextWeek') { var no = Math.min(MAX_OFF, st.offset + 1); st.offset = no; st.open = null; render(); return; }
     if (t.id === 'goToday') { futureOk = false; st.hlToday = true; st.offset = 0; st.day = today.getDay(); st.tab = 'day'; st.monthOff = 0; st.open = null; render(); return; }
     if (t.id === 'tabDay') { st.tab = 'day'; render(); return; }
-    if (t.id === 'prevMonth') { st.monthOff = Math.max(-1, st.monthOff - 1); render(); return; }
-    if (t.id === 'nextMonth') { st.monthOff = Math.min(2, st.monthOff + 1); render(); return; }
+    if (t.id === 'prevMonth') { st.monthOff = st.monthOff - 1; render(); return; }
+    if (t.id === 'nextMonth') { st.monthOff = st.monthOff + 1; render(); return; }
     if (t.dataset.goto) {
       var gd = dateFromKey(t.dataset.goto), ws = new Date(gd); ws.setDate(ws.getDate() - ws.getDay());
       var diff = Math.round((ws.getTime() - weekStart(0).getTime()) / (7 * 86400000));
       guardFuture(diff, gd.getDay(), function () { st.offset = diff; st.day = gd.getDay(); st.tab = 'day'; st.open = null; render(); }); return;
     }
-    if ((t.dataset.undo || t.dataset.open || t.dataset.do === 'done' || t.dataset.do === 'missed' || t.dataset.do === 'cancel' || t.dataset.settle) && !st.me) {
+    if ((t.dataset.undo || t.dataset.open || t.dataset.do === 'done' || t.dataset.do === 'missed' || t.dataset.do === 'cancel' || t.dataset.settle || t.dataset.unsettle) && !st.me) {
       popup('בחר שם משתמש', function () { var ms = document.getElementById('me'); if (ms) { try { ms.scrollIntoView({ block: 'center' }); } catch (e) {} ms.focus(); } });
       return;
     }
     if (t.dataset.undo) { remove(t.dataset.undo); return; }
     if (t.dataset.settle) { settle.apply(null, t.dataset.settle.split('|')); return; }
+    if (t.dataset.unsettle) { unsettle.apply(null, t.dataset.unsettle.split('|')); return; }
     if (t.dataset.open) { st.open = st.open === t.dataset.open ? null : t.dataset.open; st.draft = {}; render(); return; }
     if (t.dataset.set) { st.draft[t.dataset.set] = t.dataset.v; var p = t.closest('.panel'); if (p) { var oc = p.closest('.occ'); oc.outerHTML = renderOcc(findOcc(p.dataset.occ), key(dayDate(st.offset, st.day))); } return; }
     if (t.dataset.do === 'close') { st.open = null; st.draft = {}; render(); return; }
