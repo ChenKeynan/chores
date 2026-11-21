@@ -141,6 +141,13 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .stat .v { font-variant-numeric: tabular-nums; text-align: left; font-weight: 500; }
 .debt { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .debt .btn { min-height: 40px; padding: 6px 12px; }
+.dperson { padding: 10px 0; border-top: 1px solid var(--line); }
+.dperson:first-of-type { border-top: 0; }
+.dname { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; margin-bottom: 2px; }
+.dlvl { display: flex; align-items: flex-start; gap: 10px; padding: 3px 0; }
+.dlvl .lvl { flex: none; margin-top: 8px; }
+.dlist { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.dnone { color: var(--muted); padding: 8px 0; }
 .empty { color: var(--muted); font-size: .9rem; margin: 0; }
 .rules { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 6px; font-size: .92rem; }
 .rules li { padding-inline-start: 4px; }
@@ -375,8 +382,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'dishes', name: 'שטיפת כלים', who: ALL, slots: 1, days: D6, noBring: true },
     { id: 'unload', name: 'פינוי כלים', who: ALL, slots: 1, days: D6 },
     { id: 'trash', name: 'פינוי אשפה', who: ALL, slots: 1, days: D6 },
-    { id: 'sibus', name: 'סיבוס', who: ALL, slots: 1, days: [0, 1, 2, 3, 4] },
-    { id: 'shop', name: 'קניות לבית', who: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [1] },
+    { id: 'sibus', name: 'סיבוס', who: ['חן', 'אור', 'יעקב', 'עדן'], whoOld: ALL, slots: 1, days: [0, 1, 2, 3, 4] },
+    { id: 'shop', name: 'קניות לבית', who: ['ענבר'], whoOld: ['חן', 'ענבר', 'יעקב', 'עדן'], slots: 1, days: [1] },
     { id: 'wash1', name: 'הכנסת מכונה ענבר', who: ['ענבר'], slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'wash2', name: 'הכנסת מכונה יעקב/עדן/בננות', who: G2, slots: 1, days: [0, 1, 2, 3, 4] },
     { id: 'hang1', name: 'תליית מכונה חן/אור', who: ['חן', 'אור'], slots: 1, days: [0, 1, 2, 3, 4] },
@@ -398,16 +405,21 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     { id: 'back', name: 'החזרת סבתא בתיה (מוצאי שבת)', who: ['חן', 'אור'], slots: 1, days: [6], every: 2, phase: 1 },
     { id: 'table', name: 'עריכת שולחן לכבוד שבת', who: ['חן', 'ענבר', 'יעקב', 'עדן', 'אור'], slots: 1, days: [5] },
     { id: 'urn', name: 'מילוי וחיבור מיחם', who: ['חן', 'ענבר', 'יעקב', 'עדן', 'אור'], slots: 1, days: [5] },
-    { id: 'shabbatAm', name: 'עריכת שולחן והכנת ארוחת שבת בבוקר', who: ['ענבר', 'עדן'], slots: 1, days: [6] }
+    { id: 'shabbatAm', name: 'עריכת שולחן והכנת ארוחת שבת בבוקר', who: ['ענבר', 'עדן'], slots: 1, days: [6] },
+    // שטיפת מרפסת: ראשון הראשון בכל חודש, מתחלקת בין כולם לפי הסדר (מתחיל בחן ב-6/12/2026). נוספה בסוף הרשימה כדי לא להזיז את הסבבים של שאר המטלות.
+    { id: 'balcony', name: 'שטיפת מרפסת (אחת לחודש)', who: ALL, slots: 1, days: [0], monthly: true, fixed: true, anchor: { date: '2026-12-06', who: 'חן' } }
   ];
   // סדר קבוע בכל המטלות: חן, ענבר, אור, יעקב, עדן
-  TASKS.forEach(function (t) { t.who = t.who.slice().sort(function (a, b) { return NAMES.indexOf(a) - NAMES.indexOf(b); }); });
+  TASKS.forEach(function (t) { var so = function (a, b) { return NAMES.indexOf(a) - NAMES.indexOf(b); }; t.who = t.who.slice().sort(so); if (t.whoOld) t.whoOld = t.whoOld.slice().sort(so); });
+  // תאריך תחילת השינוי: עד אז נשארת החלוקה הישנה של סיבוס וקניות (כך ימים שעברו לא משתנים למפרע)
+  var EFFECTIVE = '2026-11-22';
+  function whoOf(t, date) { return t.whoOld && key(date) < EFFECTIVE ? t.whoOld : t.who; }
   var BRING = TASKS.filter(function (t) { return t.id === 'bring'; })[0];
   var COOK = TASKS.filter(function (t) { return t.id === 'cook'; })[0];
   var LEVELS = {
     light: ['sibus', 'trash', 'wash1', 'wash2', 'binBath', 'binParents', 'urn'],
     mid: ['shabbatAm', 'unload', 'hang1', 'hang2', 'fold1', 'fold2', 'sheets', 'table'],
-    hard: ['dishes', 'room1', 'room2', 'floor', 'stove', 'cook', 'bring', 'back', 'cleanBath', 'cleanParents', 'shop']
+    hard: ['dishes', 'room1', 'room2', 'floor', 'stove', 'cook', 'bring', 'back', 'cleanBath', 'cleanParents', 'shop', 'balcony']
   };
   // זמן משוער בדקות לכל ביצוע (1 עד 60). אפשר לשנות כאן.
   var MINUTES = {
@@ -415,7 +427,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     wash1: 10, wash2: 10, hang1: 15, hang2: 15, fold1: 20, fold2: 20,
     floor: 45, room1: 35, room2: 35, binBath: 3, binParents: 5, stove: 15,
     cleanBath: 35, cleanParents: 45, sheets: 15, cook: 180, bring: 120, back: 120,
-    table: 20, urn: 5, shabbatAm: 25
+    table: 20, urn: 5, shabbatAm: 25, balcony: 30
   };
   function durClass(m) { return m <= 15 ? 'g' : m <= 30 ? 'o' : 'r'; }
   function durBlock(t, dow) {
@@ -471,6 +483,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (idx > 6) return out;
     TASKS.forEach(function (t) {
       if (t.days.indexOf(idx) < 0) return;
+      if (t.monthly && date.getDate() > 7) return;
       if (t.every && ((((w - t.phase) % t.every) + t.every) % t.every) !== 0) return;
       for (var sl = 1; sl <= t.slots; sl++) out.push({ t: t, slot: sl });
     });
@@ -482,8 +495,9 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   }
   function occId(dateKey, o) { return dateKey + '_' + o.t.id + '_' + o.slot; }
   function rawC(t, date, slot) {
+    if (t.monthly) return date.getFullYear() * 12 + date.getMonth() + t.off;
     var w = weekIdx(date), dow = date.getDay();
-    var per = t.days.length * t.slots, n = t.who.length;
+    var per = t.days.length * t.slots, n = whoOf(t, date).length;
     var pos = t.days.indexOf(dow) * t.slots + (slot - 1), c;
     c = t.every ? Math.floor((w - t.phase) / t.every) * per + pos : w * per + pos;
     c += t.off;
@@ -491,17 +505,17 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     return c;
   }
   function baseAssignee(t, date, slot) {
-    var n = t.who.length;
-    var i = (((rawC(t, date, slot) + (t.shift || 0)) % n) + n) % n, p = t.who[i];
+    var W = whoOf(t, date), n = W.length;
+    var i = (((rawC(t, date, slot) + (t.shift || 0)) % n) + n) % n, p = W[i];
     if (t.noCook) {
       var cook = baseAssignee(COOK, date, 1);
-      if ((cook === 'חן' || cook === 'ענבר') && p === cook) p = t.who[(i + 1) % n];
+      if ((cook === 'חן' || cook === 'ענבר') && p === cook) p = W[(i + 1) % n];
     }
     if (t.noBring && date.getDay() === 5) {
       var bw = weekIdx(date) - BRING.phase;
       if ((((bw % BRING.every) + BRING.every) % BRING.every) === 0) {
         var br = baseAssignee(BRING, date, 1);
-        if (p === br) p = t.who[(i + 1) % n];
+        if (p === br) p = W[(i + 1) % n];
       }
     }
     return p;
@@ -531,9 +545,9 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       return false;
     }
     function tryMove(k, relax) {
-      var t = byKey[k].t, cur = A[k], n = t.who.length, i0 = t.who.indexOf(cur), best = null, bw = 1e9;
+      var t = byKey[k].t, W = whoOf(t, date), cur = A[k], n = W.length, i0 = W.indexOf(cur), best = null, bw = 1e9;
       for (var j = 1; j < n; j++) {
-        var p = t.who[(i0 + j) % n];
+        var p = W[(i0 + j) % n];
         if (conflict(k, p)) continue;
         var r = load(p); r.n++; r.w += LVLW[lv(k)]; if (lv(k) === 'hard') r.hard++; if (lv(k) === 'mid') r.mid++;
         if (bad(r) && !relax) continue;
@@ -550,7 +564,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
         if (!bad(r)) continue;
         var ks = Object.keys(A).filter(function (k) { return A[k] === P; });
         var cls = r.hard > 1 ? 'hard' : r.mid > 2 ? 'mid' : null;
-        var cand = ks.filter(function (k) { return cls ? lv(k) === cls : true; });
+        var cand = ks.filter(function (k) { return !byKey[k].t.fixed && (cls ? lv(k) === cls : true); });
         cand.sort(function (a, b) { return LVLW[lv(b)] - LVLW[lv(a)] || (a < b ? 1 : -1); });
         for (var ci = 0; ci < cand.length && !moved; ci++) moved = tryMove(cand[ci]);
       }
@@ -675,11 +689,16 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     st.open = null; st.draft = {};
     save(id, data).then(function () { toast('המטלה בוטלה ללא קנס'); }, function () {});
   }
-  function settle(from, to) {
-    var all = Object.assign({}, st.extra, st.main), ids = [];
-    Object.keys(all).forEach(function (id) { var r = all[id]; if (r.status === 'done' && r.instead === from && r.by === to && !r.repaid) ids.push(id); });
-    ids.reduce(function (p, id) { return p.then(function () { return patch(id, { repaid: true, flag: false }); }); }, Promise.resolve())
-      .then(function () { toast('סומן כהוחזר'); }, function () {});
+  function taskLevel(r) { var t = TASKS.filter(function (x) { return x.id === r.task; })[0]; return (t && t.level) || 'mid'; }
+  // מסמן כהוחזר החלפה אחת בלבד (הוותיקה ביותר) של אותו חייב, אותו זכאי ואותה קטגוריה
+  function settle(from, to, lvl) {
+    var all = Object.assign({}, st.extra, st.main), best = null, bid = null;
+    Object.keys(all).forEach(function (id) {
+      var r = all[id];
+      if (r.status === 'done' && r.instead === from && r.by === to && !r.repaid && taskLevel(r) === lvl && (!best || (r.ts || 0) < (best.ts || 0))) { best = r; bid = id; }
+    });
+    if (!bid) return;
+    patch(bid, { repaid: true, flag: false }).then(function () { toast('סומנה החלפה אחת כהוחזרה'); }, function () {});
   }
 
   // ---------- render ----------
@@ -816,7 +835,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     Object.keys(all).forEach(function (id) {
       var r = all[id];
       if (r.status === 'missed') kitty++;
-      else if (r.status === 'done' && r.instead && !r.repaid) { var k = r.instead + '|' + r.by; debts[k] = (debts[k] || 0) + 1; }
+      else if (r.status === 'done' && r.instead && !r.repaid) { var k = taskLevel(r) + '|' + r.instead + '|' + r.by; debts[k] = (debts[k] || 0) + 1; }
     });
 
     var h = '<div class="card kitty"><div class="amt">' + (kitty * 5) + NIS + '</div><div class="kbody"><p><strong>הקופה המשפחתית</strong><br>' + kitty + ' מטלות שלא בוצעו. כשיצטבר סכום נאה, בוחרים יחד פעילות משפחתית.</p><a class="paynow" href="https://www.bitpay.co.il/app/share-info?i=55vP46t9&j=true" target="_blank" rel="noopener">העבר עכשיו</a><p class="paynote">הכסף במסך זה הוא וירטואלי. לחיצה על הכפתור מעבירה כסף בפועל</p></div></div>';
@@ -827,13 +846,31 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
         return '<div class="stat" style="--h:' + PEOPLE[pIdx(n)].h + '"><span>' + esc(n) + '</span><span class="track"><span class="fill" style="display:block;width:' + Math.round(counts[n] * 100 / max) + '%"></span></span><span class="v">' + counts[n] + '</span></div>';
       }).join('') + '</div>';
 
-    var dk = Object.keys(debts);
+    // חובות לפי קטגוריה (קל / בינוני / קשה). בתוך כל קטגוריה מקזזים הדדית: אם חן חייב לעדן ועדן חייבת לחן, נשאר רק ההפרש.
+    var net = {}, any = false;
+    ['light', 'mid', 'hard'].forEach(function (l) {
+      net[l] = {};
+      NAMES.forEach(function (a) { NAMES.forEach(function (b) {
+        if (a === b) return;
+        var d = (debts[l + '|' + a + '|' + b] || 0) - (debts[l + '|' + b + '|' + a] || 0);
+        if (d > 0) { net[l][a + '|' + b] = d; any = true; }
+      }); });
+    });
     h += '<div class="card"><h2>החלפות שצריך להחזיר</h2>';
-    if (!dk.length) h += '<p class="empty">אין חובות פתוחים.</p>';
-    dk.forEach(function (k) {
-      var a = k.split('|');
-      h += '<div class="debt"><span>' + badge(a[0]) + ' <strong>' + esc(a[0]) + '</strong> ' + g(a[0], 'חייב', 'חייבת') + ' ל<strong>' + esc(a[1]) + '</strong>: ' + debts[k] + ' החלפות</span>' +
-        '<button class="btn ghost" data-settle="' + esc(k) + '">סמן כהוחזר</button></div>';
+    if (!any) h += '<p class="empty">אין חובות פתוחים.</p>';
+    else NAMES.forEach(function (a) {
+      h += '<div class="dperson" style="--h:' + PEOPLE[pIdx(a)].h + '"><div class="dname">' + badge(a) + ' <strong>' + esc(a) + '</strong></div>';
+      ['light', 'mid', 'hard'].forEach(function (l) {
+        var rows = NAMES.filter(function (b) { return net[l][a + '|' + b]; });
+        h += '<div class="dlvl">' + lvlIcon(l) + '<div class="dlist">';
+        if (!rows.length) h += '<span class="dnone">—</span>';
+        rows.forEach(function (b) {
+          h += '<div class="debt"><span>' + g(a, 'חייב', 'חייבת') + ' ל<strong>' + esc(b) + '</strong>: ' + net[l][a + '|' + b] + ' ' + (net[l][a + '|' + b] === 1 ? 'החלפה' : 'החלפות') + '</span>' +
+            '<button class="btn ghost" data-settle="' + esc(a + '|' + b + '|' + l) + '">סמן כהוחזר</button></div>';
+        });
+        h += '</div></div>';
+      });
+      h += '</div>';
     });
     h += '</div>';
 
@@ -843,7 +880,6 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       '<li>אם לא נמצא מחליף והמטלה לא בוצעה, התורן מפקיד 5 ' + NIS + ' בקופה בביט.</li>' +
       '<li>כשיצטבר סכום נאה, מחליטים יחד על פעילות משפחתית חוויתית.</li>' +
       '<li class="rule-burgundy">מי שתורן בישולים לשבת אחראי לומר לתורן קניות עד יום שני בצהריים איזה מצרכים יש לקנות לבישולים לשבת (לסעודה ראשונה ושלישית בעיקר).</li>' +
-      '<li>מי שביצע את המטלה שהוקצתה לו באותו יום יהיה פטור מלעשות את אותה מטלה שוב באותו היום. למשל, אם נשטפו הכלים ואז שוב התווספו כלים נוספים במשך היום.</li>' +
       '<li>כל המטלות מתייחסות למטלות שגרתיות ושוטפות לניהול הבית ולחלוקה הוגנת. מטלות חריגות באופיין או בכמותן יוחרגו ולא יכללו.</li></ol></div>';
     return h;
   }
