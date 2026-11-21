@@ -146,10 +146,15 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .dname { display: flex; align-items: center; gap: 8px; font-size: calc(1.05rem + 2pt); margin-bottom: 2px; }
 .dname strong { text-decoration: underline; text-underline-offset: 4px; }
 .dact { display: flex; align-items: center; gap: 6px; }
-.debt .undo { min-width: 40px; padding: 6px 10px; font-size: 1.1rem; }
+.debt .unset { all: unset; display: inline-flex; flex-direction: column; align-items: center; gap: 3px; box-sizing: content-box; cursor: pointer; font-size: .68rem; font-weight: 700; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.debt .unset svg { display: block; pointer-events: none; }
+.debt .unset span { pointer-events: none; }
+.dact .btn { flex: none; white-space: nowrap; }
+.dact { flex: none; }
 .dlvl .debt { flex: 1; }
 .dlvl { display: flex; align-items: flex-start; gap: 10px; padding: 3px 0; }
-.dlvl .lvl { flex: none; margin-top: 8px; }
+.dlvl .lvl { flex: none; margin: 0; }
+.dtxt { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .dlist { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .dnone { color: var(--muted); padding: 8px 0; }
 .empty { color: var(--muted); font-size: .9rem; margin: 0; }
@@ -878,11 +883,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       h += '<div class="dperson" style="--h:' + PEOPLE[pIdx(a)].h + '"><div class="dname">' + badge(a) + ' <strong>' + esc(a) + '</strong></div>';
       ['light', 'mid', 'hard'].forEach(function (l) {
         var rows = NAMES.filter(function (b) { return net[l][a + '|' + b] || st.lastSettle === a + '|' + b + '|' + l; });
-        if (!rows.length) { h += '<div class="dlvl">' + lvlIcon(l) + '<div class="dlist"><span class="dnone">—</span></div></div>'; return; }
+        if (!rows.length) { h += '<div class="dlvl"><div class="dlist"><span class="dtxt"><span class="dnone">—</span>' + lvlIcon(l) + '</span></div></div>'; return; }
         rows.forEach(function (b) {
           var k = a + '|' + b + '|' + l, n = net[l][k.replace(/\|[^|]*$/, '')] || 0, canUndo = Object.keys(all).some(function (id) { var r = all[id]; return r.status === 'done' && r.instead === a && r.by === b && r.repaid && r.repaidAt && taskLevel(r) === l; });
-          h += '<div class="dlvl">' + lvlIcon(l) + '<div class="debt"><span>' + (n ? g(a, 'חייב', 'חייבת') + ' ל<strong>' + esc(b) + '</strong>: ' + n + ' ' + (n === 1 ? 'החלפה' : 'החלפות') : 'כל ההחלפות ל<strong>' + esc(b) + '</strong> הוחזרו ✓') + '</span><span class="dact">' +
-            (canUndo ? '<button class="btn ghost undo" data-unsettle="' + esc(k) + '" aria-label="בטל סימון אחרון" title="בטל סימון אחרון">↶</button>' : '') +
+          h += '<div class="dlvl"><div class="debt"><span class="dtxt"><span>' + (n ? g(a, 'חייב', 'חייבת') + ' ל<strong>' + esc(b) + '</strong>: ' + n + ' ' + (n === 1 ? 'החלפה' : 'החלפות') : 'כל ההחלפות ל<strong>' + esc(b) + '</strong> הוחזרו ✓') + '</span>' + lvlIcon(l) + '</span><span class="dact">' +
+            (canUndo ? '<button class="unset" data-unsettle="' + esc(k) + '" aria-label="בטל סימון אחרון"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M5.07 8A8 8 0 1 1 4.48 14.74" fill="none" stroke="currentColor" stroke-width="3"/><path d="M3.47 10.77L7.84 9.6L2.3 6.4Z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg><span>בטל</span></button>' : '') +
             (n ? '<button class="btn ghost" data-settle="' + esc(k) + '">סמן כהוחזר</button>' : '') + '</span></div></div>';
         });
       });
@@ -910,6 +915,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
       var cook = assignee(COOK, fri, 1);
       var vd = dayDate(st.offset, st.day), shopper = '';
       TASKS.forEach(function (t) { if (t.id === 'shop' && occOn(vd).some(function (o) { return o.t === t; })) shopper = assignee(t, vd, 1); });
+      if (cook === (shopper || st.me)) return; // התורן קונה ומבשל בעצמו - אין למי לשאול
       var bub = document.createElement('div'); bub.className = 'bubble'; bub.setAttribute('role', 'status');
       bub.innerHTML = '<span class="bt">' + (g(shopper || st.me, 'שאל', 'שאלי') + ' את <b></b> אילו מצרכים ' + g(cook, 'הוא צריך', 'היא צריכה') + ' כדי להכין את סעודות השבת?') + '</span>';
       bub.querySelector('b').textContent = cook;
