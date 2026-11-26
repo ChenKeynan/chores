@@ -87,7 +87,11 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 
 .list { display: flex; flex-direction: column; gap: 8px; }
 .sl { margin: 0; padding: 0 12px 10px 12px; margin-top: -10px; }
-.sl summary { cursor: pointer; font-weight: 800; padding: 2px 0 2px 0; margin-inline-start: 52px; font-size: .95rem; color: #ff5a00; }
+.sl summary { cursor: pointer; font-weight: 800; padding: 2px 0 2px 0; margin-inline-start: 52px; font-size: .95rem; color: #c23b00; }
+.slh { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 6px; }
+.slh summary { cursor: pointer; font-size: .85rem; color: var(--muted, #555); margin-inline-start: 0; padding: 2px 0; }
+.slhd { margin: 6px 0; font-size: .85rem; }
+.slhd ol { margin: 2px 0 0; padding-inline-start: 22px; }
 .slrow { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
 .slrow b { min-width: 1.4em; color: var(--muted); }
 .slrow input { flex: 1; min-width: 0; font: inherit; padding: 8px 4px; border: 0; border-bottom: 1.5px solid var(--line); background: transparent; border-radius: 0; }
@@ -462,7 +466,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   TASKS.forEach(function (t, i) { t.off = i + (t.id === 'hang2' ? 1 : 0); });
 
   // ---------- state ----------
-  var st = { hlToday: false, monthOff: 0, offset: 0, day: 0, tab: 'day', me: '', onlyMine: false, open: null, draft: {}, main: {}, extra: {}, mode: 'loading', sl: [], slOpen: false };
+  var st = { hlToday: false, monthOff: 0, offset: 0, day: 0, tab: 'day', me: '', onlyMine: false, open: null, draft: {}, main: {}, extra: {}, mode: 'loading', sls: {} };
   var db = null;
   var els = {
     main: document.getElementById('main'), me: document.getElementById('me'), banner: document.getElementById('banner'),
@@ -705,21 +709,28 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   }
 
   // ---------- רשימת "צריך לקנות" מתחת למשימת סיבוס (משותפת לכל בני הבית) ----------
-  var SL_ID = '_sibusList', SL_N = 5;
-  try { var slLocal = JSON.parse(localStorage.getItem('chores.sibusList') || '[]'); if (slLocal.length) st.sl = slLocal; } catch (e) {}
-  function slHtml(isOpen) {
-    var a = st.sl || [], n = a.filter(function (x) { return x && x.trim(); }).length, h = '';
+  // לכל יום רשימה משלו (מסמך _sl_YYYY-MM-DD). ימים קודמים נשמרים וניתן לחזור אליהם דרך הניווט בין הימים.
+  var SL_P = '_sl_', SL_N = 5;
+  try { var slLocal = JSON.parse(localStorage.getItem('chores.sibusLists') || '{}'); if (slLocal && typeof slLocal === 'object') st.sls = slLocal; } catch (e) {}
+  function slHtml(isOpen, dk) {
+    var a = st.sls[dk] || [], n = a.filter(function (x) { return x && x.trim(); }).length, h = '';
     for (var i = 0; i < SL_N; i++) h += '<label class="slrow"><b>' + (i + 1) + '.</b><input class="sl-in" type="text" maxlength="60" value="' + esc(a[i] || '') + '" aria-label="פריט ' + (i + 1) + ' לקנייה"></label>';
-    return '<details class="sl" id="sl"' + (isOpen ? ' open' : '') + '><summary>צריך לקנות' + (n ? ' (' + n + ')' : '') + ':</summary>' + h + '</details>';
+    var hist = Object.keys(st.sls).filter(function (d) { return d !== dk && (st.sls[d] || []).some(function (x) { return x && x.trim(); }); }).sort().reverse();
+    var hh = hist.length ? '<details class="slh"><summary>רשימות קודמות (' + hist.length + ')</summary>' + hist.map(function (d) {
+      var dd = dateFromKey(d);
+      return '<div class="slhd"><b>יום ' + DAYS[dd.getDay()] + "' " + pad(dd.getDate()) + '/' + pad(dd.getMonth() + 1) + '/' + dd.getFullYear() + '</b><ol>' + st.sls[d].filter(function (x) { return x && x.trim(); }).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></div>';
+    }).join('') + '</details>' : '';
+    return '<details class="sl" id="sl" data-date="' + dk + '"' + (isOpen ? ' open' : '') + '><summary>צריך לקנות' + (n ? ' (' + n + ')' : '') + ':</summary>' + h + hh + '</details>';
   }
   function slSave() {
-    var v = Array.prototype.map.call(document.querySelectorAll('#sl .sl-in'), function (i) { return i.value.trim(); });
-    st.sl = v;
-    try { localStorage.setItem('chores.sibusList', JSON.stringify(v)); } catch (e) {}
-    if (db) return track(db.collection('done').doc(SL_ID).set({ items: v, ts: Date.now() }).catch(function (e) { writeFail(e); }));
+    var box = document.getElementById('sl'); if (!box) return; var dk = box.dataset.date;
+    var v = Array.prototype.map.call(box.querySelectorAll('.sl-in'), function (i) { return i.value.trim(); });
+    st.sls[dk] = v;
+    try { localStorage.setItem('chores.sibusLists', JSON.stringify(st.sls)); } catch (e) {}
+    if (db) return track(db.collection('done').doc(SL_P + dk).set({ items: v, date: dk, ts: Date.now() }).catch(function (e) { writeFail(e); }));
   }
   function mapSnap(snap) {
-    var m = {}; snap.docs.forEach(function (d) { if (d.id === SL_ID) { st.sl = (d.data().items || []).slice(0, SL_N); } else m[d.id] = d.data(); }); return m;
+    var m = {}; snap.docs.forEach(function (d) { if (d.id.indexOf(SL_P) === 0) { st.sls[d.id.slice(SL_P.length)] = (d.data().items || []).slice(0, SL_N); } else if (d.id !== '_sibusList') m[d.id] = d.data(); }); return m;
   }
 
   // ---------- actions ----------
@@ -823,7 +834,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     }
     var dots = durBlock(t, dateFromKey(k).getDay()) + (t.brain ? '<svg class="brain" role="img" aria-label="דורש חשיבה ותכנון מראש"><title>דורש חשיבה ותכנון מראש</title><use href="#w-brain"/></svg>' : '') + lvlIcon(t.level);
     var h = '<div class="occ ' + cls + '"><button class="row" data-open="' + id + '" aria-expanded="' + (st.open === id) + '">' +
-      '<span class="check" aria-hidden="true">' + icon + '</span><span class="body"><div class="name">' + title + '</div><div class="meta">' + meta + '</div></span>' + dots + '</button>' + (t.id === 'sibus' ? slHtml(st.open === id) : '');
+      '<span class="check" aria-hidden="true">' + icon + '</span><span class="body"><div class="name">' + title + '</div><div class="meta">' + meta + '</div></span>' + dots + '</button>' + (t.id === 'sibus' ? slHtml(st.open === id, k) : '');
     if (r) {
       h += '<button class="undo" data-undo="' + id + '">ביטול הסימון</button>';
     } else if (st.open === id) {
