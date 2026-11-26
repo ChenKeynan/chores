@@ -86,8 +86,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .filter input { width: 20px; height: 20px; accent-color: var(--accent); }
 
 .list { display: flex; flex-direction: column; gap: 8px; }
-.sl { margin: 6px 0 0; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
-.sl summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+.sl { margin: 0; padding: 0 12px 10px 12px; margin-top: -10px; }
+.sl summary { cursor: pointer; font-weight: 600; padding: 2px 0 2px 0; margin-inline-start: 52px; font-size: .92rem; color: var(--muted, #555); }
 .slrow { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
 .slrow b { min-width: 1.4em; color: var(--muted); }
 .slrow input { flex: 1; min-width: 0; font: inherit; padding: 8px 4px; border: 0; border-bottom: 1.5px solid var(--line); background: transparent; border-radius: 0; }
@@ -802,7 +802,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     h += '<div class="dayhead"><h2>' + (st.day === 6 ? 'שבת' : 'יום ' + DAYS[st.day] + "'") + ', ' + short(dd2) + '</h2><span class="sub">' + doneN + ' מתוך ' + dsum.total + ' בוצעו</span></div>';
     h += '<div class="legendrow">' + (st.me ? '<label class="filter"><input type="checkbox" id="mine"' + (st.onlyMine ? ' checked' : '') + '> רק של ' + esc(st.me) + '</label>' : '') + '<p class="legend"><span>' + lvlIcon('light') + 'קלה</span><span>' + lvlIcon('mid') + 'בינונית</span><span>' + lvlIcon('hard') + 'קשה</span></p></div>';
 
-    h += '<div class="list">' + list.map(function (o) { return renderOcc(o, k2) + (o.t.id === 'sibus' ? slHtml() : ''); }).join('') + '</div>';
+    h += '<div class="list">' + list.map(function (o) { return renderOcc(o, k2); }).join('') + '</div>';
     if (!list.length) h += '<p class="empty">אין מטלות להצגה ביום הזה.</p>';
     return h;
   }
@@ -838,7 +838,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
         '<hr class="sep"><div><h3><span class="wb">לא בוצעה ואין מחליף?</span></h3></div>' +
         '<div class="actions"><button class="btn alt" data-do="missed">' + esc(who) + ' ' + g(who, 'מפקיד', 'מפקידה') + ' 5 ' + NIS + ' לקופה</button><button class="btn ghost" data-do="close">סגור</button></div></div>';
     }
-    return h + '</div>';
+    return h + (t.id === 'sibus' ? slHtml() : '') + '</div>';
   }
   function chip(n, field, on) {
     return '<button class="chip" data-set="' + field + '" data-v="' + esc(n) + '" aria-pressed="' + !!on + '">' + badge(n) + esc(n) + '</button>';
