@@ -86,6 +86,12 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 .filter input { width: 20px; height: 20px; accent-color: var(--accent); }
 
 .list { display: flex; flex-direction: column; gap: 8px; }
+.sl { margin: 6px 0 0; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.sl summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+.slrow { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.slrow b { min-width: 1.4em; color: var(--muted); }
+.slrow input { flex: 1; min-width: 0; font: inherit; padding: 8px 4px; border: 0; border-bottom: 1.5px solid var(--line); background: transparent; border-radius: 0; }
+.slrow input:focus { outline: none; border-bottom-color: var(--accent, #2f6f4e); }
 .occ { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .occ.done { background: var(--accent-soft); border-color: transparent; }
 .occ.missed { background: var(--warn-soft); border-color: transparent; }
@@ -456,7 +462,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   TASKS.forEach(function (t, i) { t.off = i + (t.id === 'hang2' ? 1 : 0); });
 
   // ---------- state ----------
-  var st = { hlToday: false, monthOff: 0, offset: 0, day: 0, tab: 'day', me: '', onlyMine: false, open: null, draft: {}, main: {}, extra: {}, mode: 'loading' };
+  var st = { hlToday: false, monthOff: 0, offset: 0, day: 0, tab: 'day', me: '', onlyMine: false, open: null, draft: {}, main: {}, extra: {}, mode: 'loading', sl: [], slOpen: false };
   var db = null;
   var els = {
     main: document.getElementById('main'), me: document.getElementById('me'), banner: document.getElementById('banner'),
@@ -698,8 +704,22 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     toastT = setTimeout(function () { els.toast.hidden = true; }, 3500);
   }
 
+  // ---------- רשימת "צריך לקנות" מתחת למשימת סיבוס (משותפת לכל בני הבית) ----------
+  var SL_ID = '_sibusList', SL_N = 5;
+  try { var slLocal = JSON.parse(localStorage.getItem('chores.sibusList') || '[]'); if (slLocal.length) st.sl = slLocal; } catch (e) {}
+  function slHtml() {
+    var a = st.sl || [], n = a.filter(function (x) { return x && x.trim(); }).length, h = '';
+    for (var i = 0; i < SL_N; i++) h += '<label class="slrow"><b>' + (i + 1) + '.</b><input class="sl-in" type="text" maxlength="60" value="' + esc(a[i] || '') + '" aria-label="פריט ' + (i + 1) + ' לקנייה"></label>';
+    return '<details class="sl" id="sl"' + (st.slOpen ? ' open' : '') + '><summary>צריך לקנות' + (n ? ' (' + n + ')' : '') + ':</summary>' + h + '</details>';
+  }
+  function slSave() {
+    var v = Array.prototype.map.call(document.querySelectorAll('#sl .sl-in'), function (i) { return i.value.trim(); });
+    st.sl = v;
+    try { localStorage.setItem('chores.sibusList', JSON.stringify(v)); } catch (e) {}
+    if (db) return track(db.collection('done').doc(SL_ID).set({ items: v, ts: Date.now() }).catch(function (e) { writeFail(e); }));
+  }
   function mapSnap(snap) {
-    var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); return m;
+    var m = {}; snap.docs.forEach(function (d) { if (d.id === SL_ID) { st.sl = (d.data().items || []).slice(0, SL_N); } else m[d.id] = d.data(); }); return m;
   }
 
   // ---------- actions ----------
@@ -782,7 +802,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     h += '<div class="dayhead"><h2>' + (st.day === 6 ? 'שבת' : 'יום ' + DAYS[st.day] + "'") + ', ' + short(dd2) + '</h2><span class="sub">' + doneN + ' מתוך ' + dsum.total + ' בוצעו</span></div>';
     h += '<div class="legendrow">' + (st.me ? '<label class="filter"><input type="checkbox" id="mine"' + (st.onlyMine ? ' checked' : '') + '> רק של ' + esc(st.me) + '</label>' : '') + '<p class="legend"><span>' + lvlIcon('light') + 'קלה</span><span>' + lvlIcon('mid') + 'בינונית</span><span>' + lvlIcon('hard') + 'קשה</span></p></div>';
 
-    h += '<div class="list">' + list.map(function (o) { return renderOcc(o, k2); }).join('') + '</div>';
+    h += '<div class="list">' + list.map(function (o) { return renderOcc(o, k2) + (o.t.id === 'sibus' ? slHtml() : ''); }).join('') + '</div>';
     if (!list.length) h += '<p class="empty">אין מטלות להצגה ביום הזה.</p>';
     return h;
   }
@@ -1026,8 +1046,10 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (el.id === 'mine') { st.onlyMine = el.checked; try { localStorage.setItem('chores.mine', st.onlyMine ? '1' : '0'); } catch (e) {} render(); }
   });
 
+  document.addEventListener('toggle', function (ev) { if (ev.target && ev.target.id === 'sl') st.slOpen = ev.target.open; }, true);
   document.addEventListener('change', function (ev) {
     var el = ev.target;
+    if (el.classList && el.classList.contains('sl-in')) { slSave(); return; }
     if (el.id === 'me') { st.me = el.value; try { localStorage.setItem('chores.me', st.me); } catch (e) {} render(); }
     if (el.id === 'mine') { st.onlyMine = el.checked; try { localStorage.setItem('chores.mine', st.onlyMine ? '1' : '0'); } catch (e) {} render(); }
   });
@@ -1061,6 +1083,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
         unsub = db.collection('done').onSnapshot(function (snap) {
           st.main = mapSnap(snap);
           st.mode = 'live';
+          var ae = document.activeElement; if (ae && ae.classList && ae.classList.contains('sl-in')) return;
           render();
         }, function (err) {
           console.error(err);
