@@ -87,7 +87,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
 
 .list { display: flex; flex-direction: column; gap: 8px; }
 .sl { margin: 0; padding: 0 12px 10px 12px; margin-top: -10px; }
-.sl summary { cursor: pointer; font-weight: 600; padding: 2px 0 2px 0; margin-inline-start: 52px; font-size: .92rem; color: var(--muted, #555); }
+.sl summary { cursor: pointer; font-weight: 800; padding: 2px 0 2px 0; margin-inline-start: 52px; font-size: .95rem; color: #ff5a00; }
 .slrow { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
 .slrow b { min-width: 1.4em; color: var(--muted); }
 .slrow input { flex: 1; min-width: 0; font: inherit; padding: 8px 4px; border: 0; border-bottom: 1.5px solid var(--line); background: transparent; border-radius: 0; }
@@ -707,10 +707,10 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
   // ---------- רשימת "צריך לקנות" מתחת למשימת סיבוס (משותפת לכל בני הבית) ----------
   var SL_ID = '_sibusList', SL_N = 5;
   try { var slLocal = JSON.parse(localStorage.getItem('chores.sibusList') || '[]'); if (slLocal.length) st.sl = slLocal; } catch (e) {}
-  function slHtml() {
+  function slHtml(isOpen) {
     var a = st.sl || [], n = a.filter(function (x) { return x && x.trim(); }).length, h = '';
     for (var i = 0; i < SL_N; i++) h += '<label class="slrow"><b>' + (i + 1) + '.</b><input class="sl-in" type="text" maxlength="60" value="' + esc(a[i] || '') + '" aria-label="פריט ' + (i + 1) + ' לקנייה"></label>';
-    return '<details class="sl" id="sl"' + (st.slOpen ? ' open' : '') + '><summary>צריך לקנות' + (n ? ' (' + n + ')' : '') + ':</summary>' + h + '</details>';
+    return '<details class="sl" id="sl"' + (isOpen ? ' open' : '') + '><summary>צריך לקנות' + (n ? ' (' + n + ')' : '') + ':</summary>' + h + '</details>';
   }
   function slSave() {
     var v = Array.prototype.map.call(document.querySelectorAll('#sl .sl-in'), function (i) { return i.value.trim(); });
@@ -823,7 +823,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     }
     var dots = durBlock(t, dateFromKey(k).getDay()) + (t.brain ? '<svg class="brain" role="img" aria-label="דורש חשיבה ותכנון מראש"><title>דורש חשיבה ותכנון מראש</title><use href="#w-brain"/></svg>' : '') + lvlIcon(t.level);
     var h = '<div class="occ ' + cls + '"><button class="row" data-open="' + id + '" aria-expanded="' + (st.open === id) + '">' +
-      '<span class="check" aria-hidden="true">' + icon + '</span><span class="body"><div class="name">' + title + '</div><div class="meta">' + meta + '</div></span>' + dots + '</button>';
+      '<span class="check" aria-hidden="true">' + icon + '</span><span class="body"><div class="name">' + title + '</div><div class="meta">' + meta + '</div></span>' + dots + '</button>' + (t.id === 'sibus' ? slHtml(st.open === id) : '');
     if (r) {
       h += '<button class="undo" data-undo="' + id + '">ביטול הסימון</button>';
     } else if (st.open === id) {
@@ -838,7 +838,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
         '<hr class="sep"><div><h3><span class="wb">לא בוצעה ואין מחליף?</span></h3></div>' +
         '<div class="actions"><button class="btn alt" data-do="missed">' + esc(who) + ' ' + g(who, 'מפקיד', 'מפקידה') + ' 5 ' + NIS + ' לקופה</button><button class="btn ghost" data-do="close">סגור</button></div></div>';
     }
-    return h + (t.id === 'sibus' ? slHtml() : '') + '</div>';
+    return h + '</div>';
   }
   function chip(n, field, on) {
     return '<button class="chip" data-set="' + field + '" data-v="' + esc(n) + '" aria-pressed="' + !!on + '">' + badge(n) + esc(n) + '</button>';
@@ -1046,8 +1046,7 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; marg
     if (el.id === 'mine') { st.onlyMine = el.checked; try { localStorage.setItem('chores.mine', st.onlyMine ? '1' : '0'); } catch (e) {} render(); }
   });
 
-  document.addEventListener('toggle', function (ev) { if (ev.target && ev.target.id === 'sl') st.slOpen = ev.target.open; }, true);
-  document.addEventListener('change', function (ev) {
+    document.addEventListener('change', function (ev) {
     var el = ev.target;
     if (el.classList && el.classList.contains('sl-in')) { slSave(); return; }
     if (el.id === 'me') { st.me = el.value; try { localStorage.setItem('chores.me', st.me); } catch (e) {} render(); }
